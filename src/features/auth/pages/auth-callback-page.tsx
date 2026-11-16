@@ -1,4 +1,4 @@
-import { ArrowLeft, MailQuestion, RefreshCw } from 'lucide-react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthShell } from '@/components/shared/auth-shell'
@@ -28,7 +28,7 @@ export function AuthCallbackPage() {
 
   if (isLoading || (!session && !showError)) {
     return (
-      <AuthShell title="One moment" subtitle="We're checking your sign-in link.">
+      <AuthShell title="One moment" subtitle="Completing your sign-in.">
         <div className="flex justify-center py-10">
           <Spinner className="h-8 w-8" />
         </div>
@@ -48,31 +48,20 @@ export function AuthCallbackPage() {
 
   return (
     <AuthShell
-      title="This link has expired"
-      subtitle="Sign-in links can only be used once. Request a fresh one and we'll try again."
-      footer={
-        <Link
-          to={`/login/email?redirect=${encodeURIComponent(redirect)}`}
-          className="inline-flex items-center gap-1 font-bold text-coral-600"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to email sign in
-        </Link>
-      }
+      title="Sign-in could not be completed"
+      subtitle="The sign-in attempt failed or expired. Please try again."
     >
       <div className="flex flex-col items-center py-4 text-center">
         <span className="mb-4 rounded-3xl bg-coral-100 p-4 text-coral-500">
-          <MailQuestion className="h-8 w-8" />
+          <AlertCircle className="h-8 w-8" />
         </span>
         <p className="max-w-sm text-sm leading-relaxed text-ink-soft">
-          The link may have expired, already been used, or been opened in a different browser.
+          Make sure the provider is enabled for this project and try signing in again.
         </p>
-        <Link to={`/login/email?redirect=${encodeURIComponent(redirect)}`} className="mt-6 w-full">
+        <Link to={`/login?redirect=${encodeURIComponent(redirect)}`} className="mt-6 w-full">
           <Button className="w-full" size="lg" leftIcon={<RefreshCw className="h-4 w-4" />}>
-            Send a new link
+            Back to sign in
           </Button>
-        </Link>
-        <Link to="/login" className="mt-4 text-sm font-bold text-ink-soft hover:text-coral-600">
-          Back to sign in
         </Link>
       </div>
     </AuthShell>

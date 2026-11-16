@@ -46,42 +46,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/login/email',
-    lazy: loadPublicPage(() =>
-      import('@/features/auth/pages/email-login-page').then((module) => ({
-        default: module.EmailLoginPage,
-      })),
-    ),
-  },
-  {
     path: '/auth/callback',
     lazy: loadPage(() =>
       import('@/features/auth/pages/auth-callback-page').then((module) => ({
         default: module.AuthCallbackPage,
-      })),
-    ),
-  },
-  {
-    path: '/register',
-    lazy: loadPublicPage(() =>
-      import('@/features/auth/pages/register-page').then((module) => ({
-        default: module.RegisterPage,
-      })),
-    ),
-  },
-  {
-    path: '/forgot-password',
-    lazy: loadPublicPage(() =>
-      import('@/features/auth/pages/forgot-password-page').then((module) => ({
-        default: module.ForgotPasswordPage,
-      })),
-    ),
-  },
-  {
-    path: '/reset-password',
-    lazy: loadPage(() =>
-      import('@/features/auth/pages/reset-password-page').then((module) => ({
-        default: module.ResetPasswordPage,
       })),
     ),
   },
