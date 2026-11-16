@@ -1,0 +1,5 @@
+-- Optional local seed. Auth users must be created through Supabase Auth,
+-- so application data is normally created through the app or SQL after sign-up.
+--
+-- Example (run after creating a local user):
+-- select public.accept_trip_invitation('paste-token-from-edge-function-response');

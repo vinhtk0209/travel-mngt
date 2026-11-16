@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+    background-image:
+      radial-gradient(circle at 12% 12%, rgba(255, 217, 201, 0.45) 0, transparent 32%),
+      radial-gradient(circle at 88% 8%, rgba(184, 234, 223, 0.4) 0, transparent 30%),
+      radial-gradient(circle at 80% 85%, rgba(228, 217, 255, 0.35) 0, transparent 34%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-ink;
+  }
+
+  ::selection {
+    @apply bg-coral-200 text-ink;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-coral-400 ring-offset-2 ring-offset-cream;
+  }
+
+  input[type='date'] {
+    min-height: 2.75rem;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-3xl border border-white/70 bg-surface/90 shadow-card backdrop-blur-sm;
+  }
+
+  .soft-divider {
+    @apply border-t border-border;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #e8d8cd transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: #e8d8cd;
+  }
+
+  .cover-fallback {
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.55) 0, transparent 35%),
+      linear-gradient(135deg, #ffd9c9 0%, #ffe6b7 38%, #b8eadf 72%, #cfe6ff 100%);
+  }
+
+  .checker {
+    background-image: linear-gradient(45deg, #f7ece4 25%, transparent 25%),
+      linear-gradient(-45deg, #f7ece4 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #f7ece4 75%),
+      linear-gradient(-45deg, transparent 75%, #f7ece4 75%);
+    background-size: 18px 18px;
+    background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+  }
+}
