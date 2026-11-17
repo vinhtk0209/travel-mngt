@@ -56,6 +56,30 @@ export async function createTestUser(label = 'user'): Promise<TestUser> {
   }
 }
 
+export async function createTestUserWith(input: {
+  email: string
+  password: string
+  displayName: string
+}): Promise<TestUser> {
+  const { data, error } = await admin().auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { display_name: input.displayName },
+  })
+
+  if (error || !data.user) {
+    throw new Error(`Could not create test user: ${error?.message ?? 'unknown error'}`)
+  }
+
+  return {
+    id: data.user.id,
+    email: input.email,
+    password: input.password,
+    displayName: input.displayName,
+  }
+}
+
 export async function createTripForUser(
   owner: TestUser,
   input: { name: string; destination?: string; description?: string } = {
@@ -84,6 +108,50 @@ export async function addTripEditor(tripId: string, user: TestUser): Promise<voi
     .from('trip_members')
     .insert({ trip_id: tripId, user_id: user.id, role: 'editor' })
   if (error) throw new Error(`Could not add test editor: ${error.message}`)
+}
+
+export async function createPlaceForTrip(
+  owner: TestUser,
+  tripId: string,
+  input: {
+    name: string
+    address?: string
+    googleMapsUrl?: string
+    notes?: string
+    sortOrder?: number
+  },
+): Promise<string> {
+  const { data, error } = await admin()
+    .from('trip_items')
+    .insert({
+      trip_id: tripId,
+      created_by: owner.id,
+      name: input.name,
+      address: input.address ?? null,
+      google_maps_url: input.googleMapsUrl ?? null,
+      notes: input.notes ?? null,
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select('id')
+    .single()
+
+  if (error) throw new Error(`Could not create test place: ${error.message}`)
+  const row = data as { id: string } | null
+  if (!row) throw new Error('Could not create test place: empty response.')
+  return row.id
+}
+
+export async function getTripMemberRole(tripId: string, userId: string): Promise<string | null> {
+  const { data, error } = await admin()
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw new Error(`Could not read trip member: ${error.message}`)
+  const row = data as { role: string } | null
+  return row?.role ?? null
 }
 
 export async function cleanupTestUsers(): Promise<void> {

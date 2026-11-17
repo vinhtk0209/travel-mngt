@@ -7,17 +7,22 @@ import { ErrorState } from '@/components/ui/error-state'
 import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { TripCardSkeleton } from '@/components/ui/skeleton'
+import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
+import type { TripIdea } from '@/features/assistant/suggestions'
 import { PendingInvitations } from '@/features/trip-invitations/components/pending-invitations'
 import { useProfile } from '@/features/auth/hooks'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { TripCard } from '../components/trip-card'
 import { TripFormModal } from '../components/trip-form-modal'
 import { useDashboardTrips } from '../hooks'
+import type { TripFormValues } from '../schemas'
 
 export function DashboardPage() {
   const { displayName } = useProfile()
   const tripsQuery = useDashboardTrips()
   const [createOpen, setCreateOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [createPrefill, setCreatePrefill] = useState<TripFormValues | null>(null)
   const [search, setSearch] = useState('')
 
   const data = useMemo(() => tripsQuery.data ?? [], [tripsQuery.data])
@@ -41,6 +46,18 @@ export function DashboardPage() {
   const sharedTrips = filtered.filter((entry) => !entry.isOwner)
   const firstName = displayName.split(' ')[0]
 
+  const handlePlanIdea = (idea: TripIdea) => {
+    setAssistantOpen(false)
+    setCreatePrefill({
+      name: idea.name,
+      destination: idea.destination,
+      description: idea.description,
+      startDate: '',
+      endDate: '',
+    })
+    setCreateOpen(true)
+  }
+
   return (
     <AppShell>
       <PageHeader
@@ -52,9 +69,18 @@ export function DashboardPage() {
         }
         description="Keep every trip, tiny idea and shared plan in one happy place."
         actions={
-          <Button onClick={() => setCreateOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
-            Plan a trip
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setAssistantOpen(true)}
+              leftIcon={<Sparkles className="h-4 w-4" />}
+            >
+              Trip ideas
+            </Button>
+            <Button onClick={() => setCreateOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
+              Plan a trip
+            </Button>
+          </div>
         }
       />
 
@@ -172,7 +198,19 @@ export function DashboardPage() {
         </div>
       )}
 
-      <TripFormModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <TripFormModal
+        open={createOpen}
+        onClose={() => {
+          setCreateOpen(false)
+          setCreatePrefill(null)
+        }}
+        initialValues={createPrefill ?? undefined}
+      />
+      <TripAssistantDialog
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        onPlanTrip={handlePlanIdea}
+      />
     </AppShell>
   )
 }

@@ -120,10 +120,11 @@ export async function uploadItemImages(
   itemId: string,
   files: File[],
   startOrder = 0,
-): Promise<void> {
-  if (files.length === 0) return
+): Promise<string[]> {
+  if (files.length === 0) return []
 
   const uploadedPaths: string[] = []
+  const insertedIds: string[] = []
 
   try {
     for (let index = 0; index < files.length; index += 1) {
@@ -131,15 +132,27 @@ export async function uploadItemImages(
       const uploaded = await uploadImage({ tripId, folder: itemId, file })
       uploadedPaths.push(uploaded.path)
 
-      const { error } = await supabase.from('trip_item_images').insert({
-        trip_item_id: itemId,
-        storage_path: uploaded.path,
-        file_name: uploaded.fileName,
-        sort_order: startOrder + index,
-      })
+      const { data: inserted, error } = await supabase
+        .from('trip_item_images')
+        .insert({
+          trip_item_id: itemId,
+          storage_path: uploaded.path,
+          file_name: uploaded.fileName,
+          sort_order: startOrder + index,
+        })
+        .select('id')
+        .single()
       if (error) throw error
+      insertedIds.push(inserted.id)
     }
   } catch (error) {
+    if (insertedIds.length > 0) {
+      try {
+        await supabase.from('trip_item_images').delete().in('id', insertedIds)
+      } catch {
+        // Best-effort cleanup of the database rows.
+      }
+    }
     if (uploadedPaths.length > 0) {
       try {
         await removeStoredImages(uploadedPaths)
@@ -149,6 +162,8 @@ export async function uploadItemImages(
     }
     throw error
   }
+
+  return uploadedPaths
 }
 
 export async function createPlace(input: {
@@ -194,29 +209,59 @@ export async function updatePlace(input: {
   tripId: string
   values: PlaceInput
   files: File[]
-  existingImageCount: number
+  nextImageOrder: number
   removedImages: TripItemImage[]
 }): Promise<void> {
-  // Upload new images first so a failed upload leaves the place untouched.
-  await uploadItemImages(input.tripId, input.itemId, input.files, input.existingImageCount)
+  const uploadedPaths = await uploadItemImages(
+    input.tripId,
+    input.itemId,
+    input.files,
+    input.nextImageOrder,
+  )
 
-  const { error } = await supabase
-    .from('trip_items')
-    .update({
-      name: input.values.name,
-      address: input.values.address || null,
-      google_maps_url: normalizeMapsUrl(input.values),
-      notes: input.values.notes || null,
-      status: input.values.status,
-    })
-    .eq('id', input.itemId)
+  try {
+    const { error } = await supabase
+      .from('trip_items')
+      .update({
+        name: input.values.name,
+        address: input.values.address || null,
+        google_maps_url: normalizeMapsUrl(input.values),
+        notes: input.values.notes || null,
+        status: input.values.status,
+      })
+      .eq('id', input.itemId)
 
-  if (error) throw error
+    if (error) throw error
 
-  await syncItemTags(input.itemId, input.values.tagIds)
+    await syncItemTags(input.itemId, input.values.tagIds)
 
-  for (const image of input.removedImages) {
-    await deletePlaceImage(image)
+    for (const image of input.removedImages) {
+      await deletePlaceImage(image)
+    }
+  } catch (error) {
+    if (uploadedPaths.length > 0) {
+      try {
+        const { data: rows } = await supabase
+          .from('trip_item_images')
+          .select('id')
+          .eq('trip_item_id', input.itemId)
+          .in('storage_path', uploadedPaths)
+        if (rows && rows.length > 0) {
+          await supabase
+            .from('trip_item_images')
+            .delete()
+            .in('id', rows.map((row) => row.id))
+        }
+      } catch {
+        // Best-effort database cleanup.
+      }
+      try {
+        await removeStoredImages(uploadedPaths)
+      } catch {
+        // Best-effort storage cleanup.
+      }
+    }
+    throw error
   }
 }
 

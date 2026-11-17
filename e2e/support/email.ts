@@ -1,4 +1,5 @@
-const MAILPIT_URL = 'http://127.0.0.1:54324'
+import { getLocalStatus } from './local'
+
 const EMAIL_TIMEOUT_MS = 30_000
 const POLL_INTERVAL_MS = 400
 
@@ -23,8 +24,16 @@ export type MailpitMessage = {
   HTML: string
 }
 
+function mailpitBase(): string {
+  const url = getLocalStatus().MAILPIT_URL
+  if (typeof url !== 'string' || url === '') {
+    throw new Error('Could not find MAILPIT_URL in "supabase status" output.')
+  }
+  return url.replace(/\/$/, '')
+}
+
 async function mailpit<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${MAILPIT_URL}${path}`, init)
+  const response = await fetch(`${mailpitBase()}${path}`, init)
   if (!response.ok) {
     throw new Error(`Mailpit ${init?.method ?? 'GET'} ${path} failed with ${response.status}.`)
   }
@@ -34,7 +43,7 @@ async function mailpit<T>(path: string, init?: RequestInit): Promise<T> {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export async function clearMailbox(): Promise<void> {
-  const response = await fetch(`${MAILPIT_URL}/api/v1/messages`, { method: 'DELETE' })
+  const response = await fetch(`${mailpitBase()}/api/v1/messages`, { method: 'DELETE' })
   if (!response.ok) {
     throw new Error(`Could not clear Mailpit: ${response.status}.`)
   }

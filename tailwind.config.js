@@ -1,15 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        cream: '#FFF8F2',
-        surface: '#FFFFFF',
+        cream: 'rgb(var(--color-cream) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        raised: 'rgb(var(--color-raised) / <alpha-value>)',
         ink: {
-          DEFAULT: '#3E2F3A',
-          soft: '#6B5A66',
-          muted: '#9A8A94',
+          DEFAULT: 'rgb(var(--color-ink) / <alpha-value>)',
+          soft: 'rgb(var(--color-ink-soft) / <alpha-value>)',
+          muted: 'rgb(var(--color-ink-muted) / <alpha-value>)',
         },
         coral: {
           50: '#FFF1ED',
@@ -52,7 +54,7 @@ export default {
           300: '#FFE18A',
           400: '#FFD25E',
         },
-        border: '#F2E6DD',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],

@@ -102,6 +102,30 @@ function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 
   )
 }
 
+function PlaceLocation({ item, className }: { item: TripItemWithMeta; className?: string }) {
+  const mapsUrl = resolveGoogleMapsUrl(item)
+  const label = item.address || (mapsUrl ? 'Open in Google Maps' : 'No address yet')
+
+  return (
+    <p className={cn('mt-0.5 flex items-start gap-1 text-xs text-ink-muted', className)}>
+      <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+      {mapsUrl ? (
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="line-clamp-2 underline-offset-2 transition hover:text-mint-600 hover:underline"
+          title={`Open ${item.name} in Google Maps`}
+        >
+          {label}
+        </a>
+      ) : (
+        <span className="line-clamp-2">{label}</span>
+      )}
+    </p>
+  )
+}
+
 function Tags({ item, className }: { item: TripItemWithMeta; className?: string }) {
   if (item.tags.length === 0) return null
   return (
@@ -127,6 +151,15 @@ export function PlaceListRow({
   const completed = item.status === 'completed'
   const firstImage = item.images[0]
   const imageUrl = firstImage ? imageUrls[firstImage.storage_path] : undefined
+  const mapsUrl = resolveGoogleMapsUrl(item)
+
+  const openPhotoOrMap = () => {
+    if (item.images.length > 0) {
+      onOpenGallery(item, 0)
+      return
+    }
+    if (mapsUrl) window.open(mapsUrl, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div className="surface-card flex gap-3 p-3 transition hover:shadow-lift sm:items-center sm:gap-4 sm:p-4">
@@ -140,10 +173,23 @@ export function PlaceListRow({
 
       <button
         type="button"
-        onClick={() => onOpenGallery(item, 0)}
-        disabled={item.images.length === 0}
+        onClick={openPhotoOrMap}
+        disabled={item.images.length === 0 && !mapsUrl}
         className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl cover-fallback sm:h-20 sm:w-20"
-        aria-label={item.images.length > 0 ? `Preview photos of ${item.name}` : undefined}
+        aria-label={
+          item.images.length > 0
+            ? `Preview photos of ${item.name}`
+            : mapsUrl
+              ? `Open ${item.name} in Google Maps`
+              : undefined
+        }
+        title={
+          item.images.length > 0
+            ? `Preview photos of ${item.name}`
+            : mapsUrl
+              ? `Open ${item.name} in Google Maps`
+              : undefined
+        }
       >
         {imageUrl ? (
           <img src={imageUrl} alt={item.name} className="h-full w-full object-cover" />
@@ -170,12 +216,7 @@ export function PlaceListRow({
             >
               {item.name}
             </h3>
-            {item.address ? (
-              <p className="mt-0.5 flex items-start gap-1 text-xs text-ink-muted">
-                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-                <span className="line-clamp-2">{item.address}</span>
-              </p>
-            ) : null}
+            {item.address ? <PlaceLocation item={item} /> : null}
           </div>
           <div className="hidden sm:block">
             <PlaceActions item={item} canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} />
@@ -227,16 +268,38 @@ export function PlaceCard({
   const completed = item.status === 'completed'
   const firstImage = item.images[0]
   const imageUrl = firstImage ? imageUrls[firstImage.storage_path] : undefined
+  const mapsUrl = resolveGoogleMapsUrl(item)
+
+  const openPhotoOrMap = () => {
+    if (item.images.length > 0) {
+      onOpenGallery(item, 0)
+      return
+    }
+    if (mapsUrl) window.open(mapsUrl, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div className="surface-card group flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lift">
       <div className="relative h-36 w-full cover-fallback">
         <button
           type="button"
-          onClick={() => onOpenGallery(item, 0)}
-          disabled={item.images.length === 0}
+          onClick={openPhotoOrMap}
+          disabled={item.images.length === 0 && !mapsUrl}
           className="h-full w-full"
-          aria-label={item.images.length > 0 ? `Preview photos of ${item.name}` : undefined}
+          aria-label={
+            item.images.length > 0
+              ? `Preview photos of ${item.name}`
+              : mapsUrl
+                ? `Open ${item.name} in Google Maps`
+                : undefined
+          }
+          title={
+            item.images.length > 0
+              ? `Preview photos of ${item.name}`
+              : mapsUrl
+                ? `Open ${item.name} in Google Maps`
+                : undefined
+          }
         >
           {imageUrl ? (
             <img
@@ -263,6 +326,10 @@ export function PlaceCard({
           <span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2 py-0.5 text-[10px] font-bold text-white">
             {item.images.length} photos
           </span>
+        ) : mapsUrl && item.images.length === 0 ? (
+          <span className="absolute bottom-2 left-2 rounded-full bg-ink/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+            Open in Maps
+          </span>
         ) : null}
       </div>
 
@@ -276,10 +343,7 @@ export function PlaceCard({
           >
             {item.name}
           </h3>
-          <p className="mt-0.5 flex items-start gap-1 text-xs text-ink-muted">
-            <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-            <span className="line-clamp-2">{item.address || 'No address yet'}</span>
-          </p>
+          <PlaceLocation item={item} />
         </div>
 
         <Tags item={item} />

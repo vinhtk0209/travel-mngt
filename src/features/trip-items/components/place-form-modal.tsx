@@ -13,7 +13,12 @@ import { useSignedImageUrls } from '@/features/images/hooks'
 import { TagMultiSelect } from '@/features/tags/components/tag-multi-select'
 import type { Tag } from '@/features/tags/api'
 import { resolveGoogleMapsUrl } from '@/services/google-maps'
-import { formatFileSize } from '@/utils/image'
+import {
+  IMAGE_ACCEPT,
+  MAX_IMAGES_PER_PLACE,
+  formatFileSize,
+  validateImageFile,
+} from '@/utils/image'
 import { getErrorMessage } from '@/utils/errors'
 import { useCreatePlace, useUpdatePlace } from '../hooks'
 import type { TripItemWithMeta } from '../api'
@@ -91,8 +96,34 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming || incoming.length === 0) return
-    setFiles((current) => [...current, ...Array.from(incoming)])
+
+    const accepted: File[] = []
+    const rejected: string[] = []
+    for (const file of Array.from(incoming)) {
+      const problem = validateImageFile(file)
+      if (problem) {
+        rejected.push(`${file.name}: ${problem}`)
+        continue
+      }
+      accepted.push(file)
+    }
+
+    const room = Math.max(0, MAX_IMAGES_PER_PLACE - visibleExistingImages.length - files.length)
+    const toAdd = accepted.slice(0, room)
+    if (accepted.length > room) {
+      toast.error(`You can keep up to ${MAX_IMAGES_PER_PLACE} photos per place.`)
+    }
+    if (rejected.length > 0) {
+      toast.error(rejected[0])
+    }
+    if (toAdd.length > 0) {
+      setFiles((current) => [...current, ...toAdd])
+    }
   }
+
+  const nextImageOrder = item
+    ? item.images.reduce((max, image) => Math.max(max, image.sort_order + 1), 0)
+    : 0
 
   const handleRemoveExistingImage = (imageId: string) => {
     setRemovedImageIds((current) => new Set(current).add(imageId))
@@ -106,7 +137,7 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
           itemId: item.id,
           values: { ...values, tagIds: selectedTagIds },
           files,
-          existingImageCount: visibleExistingImages.length,
+          nextImageOrder,
           removedImages:
             item.images.filter((image) => removedImageIds.has(image.id)),
         })
@@ -296,12 +327,13 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
             <ImagePlus className="h-5 w-5" /> Add photos
           </button>
           <p className="mt-1.5 text-xs text-ink-muted">
-            Photos are compressed in your browser and uploaded when you save.
+            JPG, PNG, WEBP or GIF · up to 10 MB each · up to {MAX_IMAGES_PER_PLACE} photos. Photos
+            are compressed in your browser and uploaded when you save.
           </p>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={IMAGE_ACCEPT}
             multiple
             className="hidden"
             onChange={(event) => {

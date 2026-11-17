@@ -36,7 +36,7 @@ export function PendingInvitations() {
   }
 
   return (
-    <section className="surface-card overflow-hidden border-lavender-200/70 bg-gradient-to-r from-lavender-50 via-white to-cream p-5 sm:p-6">
+    <section className="surface-card overflow-hidden border-lavender-200/70 bg-gradient-to-r from-lavender-50 via-white to-cream p-5 dark:border-lavender-500/30 dark:from-lavender-500/10 dark:via-transparent dark:to-transparent sm:p-6">
       <div className="flex items-start gap-3">
         <span className="rounded-2xl bg-lavender-100 p-3 text-lavender-500">
           <PartyPopper className="h-5 w-5" />

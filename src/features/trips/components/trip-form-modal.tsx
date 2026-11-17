@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { getErrorMessage } from '@/utils/errors'
+import { IMAGE_ACCEPT, validateImageFile } from '@/utils/image'
 import { useCreateTrip, useUpdateTrip } from '../hooks'
 import { tripFormSchema, type TripFormValues } from '../schemas'
 import type { Trip } from '../types'
@@ -18,9 +19,10 @@ type TripFormModalProps = {
   open: boolean
   onClose: () => void
   trip?: Trip | null
+  initialValues?: Partial<TripFormValues>
 }
 
-export function TripFormModal({ open, onClose, trip }: TripFormModalProps) {
+export function TripFormModal({ open, onClose, trip, initialValues }: TripFormModalProps) {
   const isEditing = Boolean(trip)
   const createTrip = useCreateTrip()
   const updateTrip = useUpdateTrip(trip?.id)
@@ -56,13 +58,13 @@ export function TripFormModal({ open, onClose, trip }: TripFormModalProps) {
     setRemoveCover(false)
     setServerError(null)
     reset({
-      name: trip?.name ?? '',
-      destination: trip?.destination ?? '',
-      description: trip?.description ?? '',
-      startDate: trip?.start_date ?? '',
-      endDate: trip?.end_date ?? '',
+      name: trip?.name ?? initialValues?.name ?? '',
+      destination: trip?.destination ?? initialValues?.destination ?? '',
+      description: trip?.description ?? initialValues?.description ?? '',
+      startDate: trip?.start_date ?? initialValues?.startDate ?? '',
+      endDate: trip?.end_date ?? initialValues?.endDate ?? '',
     })
-  }, [open, trip, reset])
+  }, [open, trip, reset, initialValues])
 
   useEffect(() => {
     if (!coverFile) {
@@ -168,10 +170,18 @@ export function TripFormModal({ open, onClose, trip }: TripFormModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={IMAGE_ACCEPT}
             className="hidden"
             onChange={(event) => {
               const file = event.target.files?.[0] ?? null
+              if (file) {
+                const problem = validateImageFile(file)
+                if (problem) {
+                  toast.error(problem)
+                  event.target.value = ''
+                  return
+                }
+              }
               setCoverFile(file)
               setRemoveCover(false)
               event.target.value = ''

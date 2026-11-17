@@ -1,6 +1,7 @@
 import { CalendarDays, Camera, Coffee, MapPin, Sparkles, Utensils } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Logo } from './logo'
+import { ThemeToggle } from './theme-toggle'
 
 type AuthShellProps = {
   title: string
@@ -13,7 +14,10 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[1.02fr_0.98fr]">
       <div className="flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-14">
-        <Logo to="/" />
+        <div className="flex items-center justify-between">
+          <Logo to="/" />
+          <ThemeToggle />
+        </div>
 
         <div className="flex flex-1 items-center justify-center py-8">
           <div className="w-full max-w-md">

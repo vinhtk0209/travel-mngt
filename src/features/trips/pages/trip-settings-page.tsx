@@ -173,7 +173,7 @@ export function TripSettingsPage() {
                   onClick={() => setInviteOpen(true)}
                   leftIcon={<UserPlus className="h-3.5 w-3.5" />}
                 >
-                  Invite
+                  Invite / share
                 </Button>
               ) : null}
             </div>
@@ -210,7 +210,7 @@ export function TripSettingsPage() {
                 </span>
                 <div>
                   <h2 className="font-display text-lg font-extrabold">Pending invitations</h2>
-                  <p className="text-xs text-ink-muted">Private links waiting for a reply</p>
+                  <p className="text-xs text-ink-muted">Email invites and share links waiting for a reply</p>
                 </div>
               </div>
             </div>

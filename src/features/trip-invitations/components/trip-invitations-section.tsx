@@ -1,4 +1,4 @@
-import { Clock, Mail, X } from 'lucide-react'
+import { Clock, Link2, Mail, X } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,7 +35,7 @@ export function TripInvitationsSection({ tripId }: { tripId: string }) {
         icon={Mail}
         tone="sky"
         title="No pending invitations"
-        description="Invite travel buddies by email. Pending invites will wait here until they respond."
+        description="Invite travel buddies by email or share a link. Pending invites will wait here until they respond."
         className="py-8"
       />
     )
@@ -49,11 +49,17 @@ export function TripInvitationsSection({ tripId }: { tripId: string }) {
             key={invitation.id}
             className="flex items-center gap-3 rounded-2xl border border-border/80 bg-white/60 p-3"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sky-500">
-              <Mail className="h-4 w-4" />
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                invitation.email ? 'bg-sky-100 text-sky-500' : 'bg-lavender-100 text-lavender-500'
+              }`}
+            >
+              {invitation.email ? <Mail className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-ink">{invitation.email}</p>
+              <p className="truncate text-sm font-bold text-ink">
+                {invitation.email ?? 'Anyone with the link'}
+              </p>
               <p className="flex items-center gap-1 text-xs text-ink-muted">
                 <Clock className="h-3 w-3" /> Expires {formatDate(invitation.expires_at, 'd MMM')}
               </p>
@@ -66,7 +72,7 @@ export function TripInvitationsSection({ tripId }: { tripId: string }) {
               size="icon"
               className="text-rose-500 hover:bg-rose-50"
               onClick={() => setCancelling(invitation)}
-              aria-label={`Cancel invitation for ${invitation.email}`}
+              aria-label={`Cancel invitation for ${invitation.email ?? 'anyone with the link'}`}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -83,9 +89,13 @@ export function TripInvitationsSection({ tripId }: { tripId: string }) {
         confirmLabel="Cancel invite"
         cancelLabel="Keep it"
         description={
-          <>
-            The invitation for <strong>{cancelling?.email}</strong> will stop working immediately.
-          </>
+          cancelling?.email ? (
+            <>
+              The invitation for <strong>{cancelling.email}</strong> will stop working immediately.
+            </>
+          ) : (
+            'This share link will stop working immediately.'
+          )
         }
       />
     </>

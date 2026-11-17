@@ -2,6 +2,7 @@ import { Compass } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Logo } from './logo'
+import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -27,7 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </NavLink>
             </nav>
           </div>
-          <UserMenu />
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            <UserMenu />
+          </div>
         </div>
       </header>
 

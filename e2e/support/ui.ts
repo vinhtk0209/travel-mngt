@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
+import { createClient } from '@supabase/supabase-js'
 import { expect, type Page } from '@playwright/test'
-import type { TestUser } from './admin'
+import { createTestUserWith, type TestUser } from './admin'
+import { readLocalEnv } from './local'
 
 export function uniqueName(prefix: string): string {
   return `${prefix} ${randomUUID().slice(0, 8)}`
@@ -11,24 +13,48 @@ export async function loginAs(
   user: Pick<TestUser, 'email' | 'password'>,
   redirectPath = '/dashboard',
 ): Promise<void> {
-  await page.goto(`/login?redirect=${encodeURIComponent(redirectPath)}`)
-  await page.getByLabel('Email', { exact: true }).fill(user.email)
-  await page.getByLabel('Password', { exact: true }).fill(user.password)
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 25_000 })
+  const env = readLocalEnv()
+  const client = createClient(env.url, env.anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
+  })
+
+  const { data, error } = await client.auth.signInWithPassword({
+    email: user.email,
+    password: user.password,
+  })
+  if (error || !data.session) {
+    throw new Error(`Could not create an E2E session: ${error?.message ?? 'no session returned'}`)
+  }
+
+  const projectRef = new URL(env.url).hostname.split('.')[0]
+  const storageKey = `sb-${projectRef}-auth-token`
+
+  await page.addInitScript(
+    ({ key, session }) => {
+      window.localStorage.setItem(key, JSON.stringify(session))
+    },
+    { key: storageKey, session: data.session },
+  )
+
+  await page.goto(redirectPath)
+  const expectedPath = new URL(redirectPath, env.url).pathname
+  await page.waitForFunction(
+    (path) => window.location.pathname === path,
+    expectedPath,
+    { timeout: 25_000 },
+  )
 }
 
 export async function registerViaUi(
   page: Page,
   input: { displayName: string; email: string; password: string },
 ): Promise<void> {
-  await page.goto('/register')
-  await page.getByLabel('Your name').fill(input.displayName)
-  await page.getByLabel('Email', { exact: true }).fill(input.email)
-  await page.getByLabel('Password', { exact: true }).fill(input.password)
-  await page.getByLabel('Confirm password').fill(input.password)
-  await page.getByRole('button', { name: 'Create account' }).click()
-  await page.waitForURL((url) => url.pathname === '/dashboard', { timeout: 25_000 })
+  const user = await createTestUserWith(input)
+  await loginAs(page, user)
   await expect(page.getByRole('heading', { name: /where to next/i })).toBeVisible()
 }
 

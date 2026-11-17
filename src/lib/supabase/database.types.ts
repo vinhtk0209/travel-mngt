@@ -99,7 +99,7 @@ export type Database = {
         Row: {
           id: string
           trip_id: string
-          email: string
+          email: string | null
           role: TripRole
           invited_by: string
           token_hash: string
@@ -111,7 +111,7 @@ export type Database = {
         Insert: {
           id?: string
           trip_id: string
-          email: string
+          email?: string | null
           role?: TripRole
           invited_by: string
           token_hash: string

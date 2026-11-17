@@ -111,12 +111,14 @@ export async function createTrip(input: {
 
   if (!input.coverFile) return data
 
+  let coverPath: string | null = null
   try {
     const cover = await uploadImage({
       tripId: data.id,
       folder: 'cover',
       file: input.coverFile,
     })
+    coverPath = cover.path
     const { data: updated, error: updateError } = await supabase
       .from('trips')
       .update({ cover_image: cover.path })
@@ -127,6 +129,13 @@ export async function createTrip(input: {
     if (updateError) throw updateError
     return updated
   } catch (uploadError) {
+    if (coverPath) {
+      try {
+        await removeStoredImages([coverPath])
+      } catch {
+        // Best-effort cleanup of the orphaned cover.
+      }
+    }
     await supabase.from('trips').delete().eq('id', data.id)
     throw uploadError
   }
@@ -140,15 +149,7 @@ export async function updateTrip(input: {
   removeCover?: boolean
 }): Promise<Trip> {
   let coverPath = input.previousCoverPath ?? null
-
-  if (input.removeCover && coverPath) {
-    try {
-      await removeStoredImages([coverPath])
-    } catch {
-      // Losing the old file is not fatal; the database reference is cleared below.
-    }
-    coverPath = null
-  }
+  let uploadedCoverPath: string | null = null
 
   if (input.coverFile) {
     const cover = await uploadImage({
@@ -156,14 +157,10 @@ export async function updateTrip(input: {
       folder: 'cover',
       file: input.coverFile,
     })
-    if (input.previousCoverPath) {
-      try {
-        await removeStoredImages([input.previousCoverPath])
-      } catch {
-        // Non-fatal orphaned object.
-      }
-    }
+    uploadedCoverPath = cover.path
     coverPath = cover.path
+  } else if (input.removeCover) {
+    coverPath = null
   }
 
   const { data, error } = await supabase
@@ -173,7 +170,25 @@ export async function updateTrip(input: {
     .select('*')
     .single()
 
-  if (error) throw error
+  if (error) {
+    if (uploadedCoverPath) {
+      try {
+        await removeStoredImages([uploadedCoverPath])
+      } catch {
+        // Best-effort cleanup of the orphaned cover.
+      }
+    }
+    throw error
+  }
+
+  if (input.previousCoverPath && input.previousCoverPath !== coverPath) {
+    try {
+      await removeStoredImages([input.previousCoverPath])
+    } catch {
+      // Non-fatal orphaned object; the database already points at the new cover.
+    }
+  }
+
   return data
 }
 

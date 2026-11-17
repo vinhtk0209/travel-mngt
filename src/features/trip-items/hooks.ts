@@ -53,7 +53,7 @@ export function useUpdatePlace(tripId: string) {
       itemId: string
       values: PlaceInput
       files: File[]
-      existingImageCount: number
+      nextImageOrder: number
       removedImages: TripItemImage[]
     }) => updatePlace({ tripId, ...input }),
     onSuccess: invalidate,

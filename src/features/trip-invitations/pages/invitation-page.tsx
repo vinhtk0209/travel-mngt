@@ -17,14 +17,22 @@ export function InvitationPage() {
 
   const handleAccept = async () => {
     if (!token) return
-    const tripId = await accept.mutateAsync(token)
-    navigate(`/trips/${tripId}`, { replace: true })
+    try {
+      const tripId = await accept.mutateAsync(token)
+      navigate(`/trips/${tripId}`, { replace: true })
+    } catch {
+      return
+    }
   }
 
   const handleReject = async () => {
     if (!token) return
-    await reject.mutateAsync(token)
-    navigate('/dashboard', { replace: true })
+    try {
+      await reject.mutateAsync(token)
+      navigate('/dashboard', { replace: true })
+    } catch {
+      return
+    }
   }
 
   const hasError = accept.isError || reject.isError
@@ -32,7 +40,7 @@ export function InvitationPage() {
   return (
     <AuthShell
       title="A trip is waiting for you"
-      subtitle={`Signed in as ${user?.email ?? 'your account'}. Accepting will add you to the trip instantly.`}
+      subtitle={`Signed in as ${user?.email ?? 'your account'}. The trip will be added to this account.`}
       footer={
         <Link to="/dashboard" className="inline-flex items-center gap-1 font-bold text-coral-600">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to your trips
@@ -44,14 +52,14 @@ export function InvitationPage() {
           <MailQuestion className="h-8 w-8" />
         </span>
         <p className="max-w-sm text-sm leading-relaxed text-ink-soft">
-          Invitations are tied to the email they were sent to. If this one was meant for a different
-          address, sign in with that account instead.
+          If this invite was sent to a specific email, sign in with that account. Link invites can
+          be accepted by anyone who has the link.
         </p>
 
         {hasError ? (
           <div className="mt-4 w-full rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-            This invitation could not be used. It may have expired, already been answered, or belong
-            to a different email address.
+            This invitation could not be used. It may have expired, already been answered, or be
+            reserved for a different email address.
           </div>
         ) : null}
 

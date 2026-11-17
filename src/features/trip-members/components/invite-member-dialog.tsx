@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Copy, MailPlus, Send } from 'lucide-react'
+import { AlertCircle, Check, Copy, Link2, MailPlus, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
   const [role, setRole] = useState<InviteRole>('editor')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<InviteResponse | null>(null)
+  const [resultEmail, setResultEmail] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
     setRole('editor')
     setError(null)
     setResult(null)
+    setResultEmail(null)
     setCopied(false)
   }, [open])
 
@@ -40,18 +42,21 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
     setError(null)
 
     const normalized = email.trim().toLowerCase()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-      setError('Enter a valid email address')
+    if (normalized && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setError('Enter a valid email address, or leave it blank to create a share link')
       return
     }
 
     try {
-      const response = await invite.mutateAsync({ email: normalized, role })
+      const response = await invite.mutateAsync({ email: normalized || undefined, role })
       setResult(response)
+      setResultEmail(normalized || null)
       if (response.emailSent) {
         toast.success('Invitation email sent')
-      } else {
+      } else if (normalized) {
         toast.success('Invitation created — share the link below')
+      } else {
+        toast.success('Share link created')
       }
     } catch (submitError) {
       setError(getErrorMessage(submitError, 'Could not create the invitation'))
@@ -74,8 +79,8 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
     <Modal
       open={open}
       onClose={onClose}
-      title="Invite a travel buddy"
-      description={`Bring someone into “${tripName}”. They can accept from their dashboard or email.`}
+      title="Invite or share this trip"
+      description={`Bring someone into “${tripName}”. Add their email, or leave it blank to create a link you can share anywhere.`}
       size="sm"
       footer={
         result ? (
@@ -93,7 +98,7 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
               isLoading={invite.isPending}
               leftIcon={<Send className="h-4 w-4" />}
             >
-              Send invite
+              Create invite
             </Button>
           </>
         )
@@ -103,14 +108,18 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-2xl bg-mint-50 p-4">
             <span className="rounded-full bg-mint-200 p-2 text-mint-600">
-              <Check className="h-4 w-4" />
+              {resultEmail ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
             </span>
             <div className="text-sm text-ink-soft">
-              <p className="font-bold text-ink">Invitation ready</p>
+              <p className="font-bold text-ink">
+                {resultEmail ? 'Invitation ready' : 'Share link ready'}
+              </p>
               <p className="mt-1">
-                {result.emailSent
-                  ? 'The email is on its way. You can also share the link directly.'
-                  : 'Email delivery is not configured, so share this private link with your buddy.'}
+                {resultEmail
+                  ? result.emailSent
+                    ? 'The email is on its way. You can also share the link directly.'
+                    : 'Email delivery is not configured, so share this private link with your buddy.'
+                  : `Anyone who signs in with this link will join the trip as ${role === 'editor' ? 'an editor' : 'a viewer'}.`}
               </p>
             </div>
           </div>
@@ -131,7 +140,9 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
           </Field>
 
           <p className="text-xs text-ink-muted">
-            The link expires in 7 days. Only the invited email can accept it.
+            {resultEmail
+              ? `The link expires in 7 days and can only be accepted by ${resultEmail}.`
+              : 'The link expires in 7 days. You can cancel the invitation from the members list at any time.'}
           </p>
         </div>
       ) : (
@@ -143,7 +154,7 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
             </div>
           ) : null}
 
-          <Field label="Email address" htmlFor="invite-email" required>
+          <Field label="Email address (optional)" htmlFor="invite-email">
             <div className="relative">
               <MailPlus className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
               <Input
@@ -156,6 +167,9 @@ export function InviteMemberDialog({ open, onClose, tripId, tripName }: InviteMe
                 onChange={(event) => setEmail(event.target.value)}
               />
             </div>
+            <p className="text-xs text-ink-muted">
+              Leave blank to create a link you can share in any chat or group.
+            </p>
           </Field>
 
           <Field label="Role" htmlFor="invite-role">

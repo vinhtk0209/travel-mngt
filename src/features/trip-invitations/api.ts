@@ -9,12 +9,12 @@ function extractFunctionError(error: unknown): string {
     const message = (error as { message?: unknown }).message
     if (typeof message === 'string' && message) return message
   }
-  return 'Could not send the invitation'
+  return 'Could not create the invitation'
 }
 
 export async function inviteMember(input: {
   tripId: string
-  email: string
+  email?: string
   role: InviteRole
 }): Promise<InviteResponse> {
   const { data, error } = await supabase.functions.invoke<InviteResponse>('invite-member', {

@@ -10,7 +10,7 @@ type SupabaseStatus = {
   [key: string]: unknown
 }
 
-const LOCAL_URL_PATTERN = /^http:\/\/(127\.0\.0\.1|localhost):54321\/?$/
+const LOCAL_URL_PATTERN = /^http:\/\/(?:127\.0\.0\.1|localhost):\d{2,5}\/?$/
 let cachedStatus: SupabaseStatus | null = null
 
 export function readLocalEnv(): { url: string; anonKey: string } {

@@ -127,7 +127,7 @@ export function TripDetailPage() {
                   onClick={() => setInviteOpen(true)}
                   leftIcon={<UserPlus className="h-4 w-4" />}
                 >
-                  Invite
+                  Invite / share
                 </Button>
               ) : null}
               {permissions.canEdit ? (

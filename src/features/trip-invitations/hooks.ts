@@ -46,14 +46,14 @@ function useInvalidateAfterResponse(tripId?: string) {
 export function useInviteMember(tripId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { email: string; role: InviteRole }) =>
+    mutationFn: (input: { email?: string; role: InviteRole }) =>
       inviteMember({ tripId, email: input.email, role: input.role }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.tripInvitations(tripId) })
       void queryClient.invalidateQueries({ queryKey: queryKeys.tripMembers(tripId) })
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'Could not send invitation'))
+      toast.error(getErrorMessage(error, 'Could not create invitation'))
     },
   })
 }

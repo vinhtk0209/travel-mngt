@@ -6,23 +6,34 @@ import { AuthProvider } from '@/features/auth/auth-context'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { queryClient } from './query-client'
 import { router } from './router'
+import { ThemeProvider, useTheme } from './theme-provider'
+
+function AppToaster() {
+  const { resolved } = useTheme()
+  return (
+    <Toaster
+      theme={resolved}
+      position="top-center"
+      toastOptions={{
+        className: 'font-sans font-semibold',
+      }}
+    />
+  )
+}
 
 export function App() {
-  if (!isSupabaseConfigured) {
-    return <SetupNotice />
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            className: 'font-sans font-semibold',
-          }}
-        />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      {isSupabaseConfigured ? (
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RouterProvider router={router} />
+            <AppToaster />
+          </AuthProvider>
+        </QueryClientProvider>
+      ) : (
+        <SetupNotice />
+      )}
+    </ThemeProvider>
   )
 }

@@ -124,16 +124,16 @@ Deno.serve(async (request) => {
   }
 
   const tripId = body.tripId?.trim()
-  const email = body.email?.trim().toLowerCase()
+  const email = body.email?.trim().toLowerCase() || null
   const role: InviteRole = body.role === 'viewer' ? 'viewer' : 'editor'
 
   if (!tripId || !/^[0-9a-f-]{36}$/i.test(tripId)) {
     return json({ error: 'A valid trip id is required' }, 400)
   }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return json({ error: 'A valid email address is required' }, 400)
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json({ error: 'Enter a valid email address, or leave it blank to create a share link' }, 400)
   }
-  if (email === user.email.toLowerCase()) {
+  if (email && email === user.email.toLowerCase()) {
     return json({ error: 'You are already a member of this trip' }, 400)
   }
 
@@ -157,11 +157,15 @@ Deno.serve(async (request) => {
     return json({ error: 'Only the trip owner can invite members' }, 403)
   }
 
-  const { data: recipientProfile } = await admin
-    .from('profiles')
-    .select('id, display_name')
-    .eq('email', email)
-    .maybeSingle<{ id: string; display_name: string }>()
+  const recipientProfile = email
+    ? (
+        await admin
+          .from('profiles')
+          .select('id, display_name')
+          .eq('email', email)
+          .maybeSingle<{ id: string; display_name: string }>()
+      ).data
+    : null
 
   if (recipientProfile) {
     const { data: existingMember } = await admin
@@ -180,13 +184,19 @@ Deno.serve(async (request) => {
   const tokenHash = await sha256(token)
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: pending } = await admin
+  const pendingBase = admin
     .from('trip_invitations')
     .select('id')
     .eq('trip_id', tripId)
-    .eq('email', email)
     .eq('status', 'pending')
-    .maybeSingle<{ id: string }>()
+
+  const { data: pending } = email
+    ? await pendingBase.eq('email', email).maybeSingle<{ id: string }>()
+    : await pendingBase
+        .is('email', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle<{ id: string }>()
 
   let invitationId: string
 
@@ -194,6 +204,7 @@ Deno.serve(async (request) => {
     const { data: updated, error: updateError } = await admin
       .from('trip_invitations')
       .update({
+        email,
         role,
         invited_by: user.id,
         token_hash: tokenHash,
@@ -235,7 +246,7 @@ Deno.serve(async (request) => {
   let emailSent = false
   let emailError: string | null = null
 
-  if (resendKey && fromEmail) {
+  if (email && resendKey && fromEmail) {
     const { data: inviterProfile } = await admin
       .from('profiles')
       .select('display_name')
@@ -267,7 +278,9 @@ Deno.serve(async (request) => {
       emailError = `Email provider responded with ${response.status}`
     }
   } else {
-    emailError = 'Email delivery is not configured; share the invite link manually'
+    emailError = email
+      ? 'Email delivery is not configured; share the invite link manually'
+      : 'No email address provided; share the invite link manually'
   }
 
   return json({

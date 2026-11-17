@@ -2,6 +2,53 @@ const MAX_DIMENSION = 1920
 const SKIP_BELOW_BYTES = 300 * 1024
 const QUALITY = 0.82
 
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+export const MAX_IMAGES_PER_PLACE = 12
+export const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,image/gif'
+
+const SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+
+const EXTENSION_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  heic: 'image/heic',
+  heif: 'image/heif',
+}
+
+function detectImageType(file: File): string {
+  if (file.type) return file.type
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return EXTENSION_TYPES[extension] ?? ''
+}
+
+export function normalizeImageFile(file: File): File {
+  const type = detectImageType(file)
+  if (!file.type && type) {
+    return new File([file], file.name, { type, lastModified: file.lastModified })
+  }
+  return file
+}
+
+export function validateImageFile(file: File): string | null {
+  const type = detectImageType(file)
+  if (type === 'image/heic' || type === 'image/heif' || /\.hei[cf]$/i.test(file.name)) {
+    return 'HEIC photos are not supported. Export it as JPG or PNG first.'
+  }
+  if (!SUPPORTED_TYPES.has(type)) {
+    return 'Use a JPG, PNG, WEBP or GIF image.'
+  }
+  if (file.size === 0) {
+    return 'This file is empty.'
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return `Photos must be under ${formatFileSize(MAX_IMAGE_BYTES)} — this one is ${formatFileSize(file.size)}.`
+  }
+  return null
+}
+
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
@@ -23,7 +70,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  * files are returned untouched. Falls back to the original file on failure.
  */
 export async function compressImage(file: File): Promise<File> {
-  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  if (!SUPPORTED_TYPES.has(file.type) || file.type === 'image/gif') return file
   if (file.size <= SKIP_BELOW_BYTES) return file
 
   try {
