@@ -5,9 +5,16 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { TagPill } from '@/components/ui/tag-pill'
-import { TAG_COLOR_PRESETS, getTagColorStyle, pickTagColor } from '@/utils/tags'
+import {
+  TAG_COLOR_PRESETS,
+  getReadableTextColor,
+  getTagColorStyle,
+  normalizeHexColor,
+  pickTagColor,
+} from '@/utils/tags'
 import { getErrorMessage } from '@/utils/errors'
 import { cn } from '@/utils/cn'
+import { useTheme } from '@/app/theme-provider'
 import { useCreateTag, useDeleteTag, useUpdateTag } from '../hooks'
 import type { Tag } from '../api'
 
@@ -34,7 +41,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
     const name = newName.trim()
     if (!name) return
     try {
-      await createTag.mutateAsync({ name, color: newColor })
+      await createTag.mutateAsync({ name, color: normalizeHexColor(newColor) })
       setNewName('')
       setNewColor(pickTagColor(tags.length + 1))
       toast.success('Tag created')
@@ -46,7 +53,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
   const startEditing = (tag: Tag) => {
     setEditing(tag)
     setEditName(tag.name)
-    setEditColor(tag.color)
+    setEditColor(normalizeHexColor(tag.color))
   }
 
   const handleUpdate = async () => {
@@ -54,7 +61,11 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
     const name = editName.trim()
     if (!name) return
     try {
-      await updateTag.mutateAsync({ tagId: editing.id, name, color: editColor })
+      await updateTag.mutateAsync({
+        tagId: editing.id,
+        name,
+        color: normalizeHexColor(editColor),
+      })
       setEditing(null)
       toast.success('Tag updated')
     } catch (error) {
@@ -109,7 +120,15 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
 
       {editing ? (
         <div className="rounded-2xl border border-coral-200 bg-coral-50/50 p-3">
-          <p className="mb-2 text-xs font-bold text-ink-soft">Editing “{editing.name}”</p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-bold text-ink-soft">Editing “{editing.name}”</p>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-muted">
+                Preview
+              </span>
+              <TagPill name={editName.trim() || 'Tag'} color={editColor} />
+            </div>
+          </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               value={editName}
@@ -117,7 +136,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
               className="h-9 flex-1"
               aria-label="Tag name"
             />
-            <ColorPicker value={editColor} onChange={setEditColor} />
+            <ColorPicker value={editColor} onChange={setEditColor} label="Edit tag colour" />
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void handleUpdate()} isLoading={updateTag.isPending}>
                 <Check className="h-3.5 w-3.5" /> Save
@@ -131,7 +150,10 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
       ) : null}
 
       {canEdit ? (
-        <form onSubmit={(event) => void handleCreate(event)} className="flex flex-col gap-2 sm:flex-row">
+        <form
+          onSubmit={(event) => void handleCreate(event)}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
           <div className="relative flex-1">
             <Palette className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
             <Input
@@ -142,7 +164,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
               aria-label="New tag name"
             />
           </div>
-          <ColorPicker value={newColor} onChange={setNewColor} />
+          <ColorPicker value={newColor} onChange={setNewColor} label="New tag colour" />
           <Button
             type="submit"
             size="md"
@@ -172,25 +194,76 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
   )
 }
 
-function ColorPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function ColorPicker({
+  value,
+  onChange,
+  label = 'Tag colour',
+}: {
+  value: string
+  onChange: (value: string) => void
+  label?: string
+}) {
+  const { resolved } = useTheme()
+  const normalized = normalizeHexColor(value)
+  const isPreset = TAG_COLOR_PRESETS.some((preset) => preset.value.toUpperCase() === normalized)
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tag colour">
-      {TAG_COLOR_PRESETS.map((preset) => (
-        <button
-          key={preset.value}
-          type="button"
-          onClick={() => onChange(preset.value)}
-          className={cn(
-            'h-7 w-7 rounded-full border-2 transition',
-            value.toUpperCase() === preset.value.toUpperCase()
-              ? 'scale-110 border-ink/40'
-              : 'border-white hover:scale-105',
-          )}
-          style={getTagColorStyle(preset.value)}
-          aria-label={preset.label}
-          aria-pressed={value.toUpperCase() === preset.value.toUpperCase()}
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={label}>
+      {TAG_COLOR_PRESETS.map((preset) => {
+        const selected = normalized === preset.value.toUpperCase()
+        return (
+          <button
+            key={preset.value}
+            type="button"
+            onClick={() => onChange(preset.value)}
+            className={cn(
+              'relative inline-flex h-7 w-7 items-center justify-center rounded-full border-2 transition',
+              selected
+                ? 'scale-110 border-ink ring-2 ring-ink/30 ring-offset-2 ring-offset-cream'
+                : 'border-white hover:scale-105',
+            )}
+            style={{ backgroundColor: preset.value }}
+            aria-label={preset.label}
+            aria-pressed={selected}
+            title={preset.label}
+          >
+            {selected ? (
+              <Check
+                className="h-3.5 w-3.5"
+                style={{ color: getReadableTextColor(preset.value) }}
+                aria-hidden
+              />
+            ) : null}
+          </button>
+        )
+      })}
+
+      <label
+        className="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink/30 bg-surface"
+        title="Custom colour"
+        style={
+          isPreset
+            ? undefined
+            : {
+                backgroundColor: getTagColorStyle(normalized, resolved).backgroundColor,
+                borderStyle: 'solid',
+                borderColor: getTagColorStyle(normalized, resolved).borderColor,
+              }
+        }
+      >
+        <Palette
+          className="pointer-events-none h-3.5 w-3.5"
+          style={isPreset ? undefined : { color: getReadableTextColor(normalized) }}
+          aria-hidden
         />
-      ))}
+        <input
+          type="color"
+          value={normalized}
+          onChange={(event) => onChange(event.target.value.toUpperCase())}
+          className="absolute inset-0 cursor-pointer opacity-0"
+          aria-label={`${label} custom`}
+        />
+      </label>
     </div>
   )
 }
