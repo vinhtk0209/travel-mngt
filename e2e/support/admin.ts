@@ -103,11 +103,19 @@ export async function createTripForUser(
   return row.id
 }
 
-export async function addTripEditor(tripId: string, user: TestUser): Promise<void> {
+export async function addTripMember(
+  tripId: string,
+  user: TestUser,
+  role: 'editor' | 'viewer',
+): Promise<void> {
   const { error } = await admin()
     .from('trip_members')
-    .insert({ trip_id: tripId, user_id: user.id, role: 'editor' })
-  if (error) throw new Error(`Could not add test editor: ${error.message}`)
+    .insert({ trip_id: tripId, user_id: user.id, role })
+  if (error) throw new Error(`Could not add test member: ${error.message}`)
+}
+
+export async function addTripEditor(tripId: string, user: TestUser): Promise<void> {
+  await addTripMember(tripId, user, 'editor')
 }
 
 export async function createPlaceForTrip(

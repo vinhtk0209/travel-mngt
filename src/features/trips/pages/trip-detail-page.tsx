@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
+import { useAuth } from '@/features/auth/auth-context'
+import { TripChatSection } from '@/features/chat/components/trip-chat-section'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
@@ -21,6 +23,7 @@ export function TripDetailPage() {
   const tripQuery = useTrip(tripId)
   const membersQuery = useTripMembers(tripId)
   const permissions = useTripPermissions(tripId)
+  const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
 
@@ -151,6 +154,13 @@ export function TripDetailPage() {
           </div>
 
           <TripPlacesSection tripId={trip.id} canEdit={permissions.canEdit} />
+
+          <TripChatSection
+            tripId={trip.id}
+            members={members}
+            currentUserId={user?.id}
+            canSend={permissions.canEdit}
+          />
         </div>
       )}
 

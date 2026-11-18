@@ -159,6 +159,27 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_messages: {
+        Row: {
+          id: string
+          trip_id: string
+          sender_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trip_id: string
+          sender_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       trip_items: {
         Row: {
           id: string
