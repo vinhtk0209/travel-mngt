@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { Analytics } from '@vercel/analytics/react'
 import { SetupNotice } from '@/components/shared/setup-notice'
 import { AuthProvider } from '@/features/auth/auth-context'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
@@ -34,6 +35,7 @@ export function App() {
       ) : (
         <SetupNotice />
       )}
+      <Analytics />
     </ThemeProvider>
   )
 }
