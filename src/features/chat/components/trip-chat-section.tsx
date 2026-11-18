@@ -2,6 +2,8 @@ import { formatDistanceToNow } from 'date-fns'
 import { AlertCircle, Eye, MessageCircle, Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Avatar } from '@/components/ui/avatar'
+import { resolveAvatarUrl } from '@/features/avatars/api'
+import { useAvatarUrls } from '@/features/avatars/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { TripMemberWithProfile } from '@/features/trip-members/types'
@@ -31,6 +33,7 @@ export function TripChatSection({
   const listRef = useRef<HTMLDivElement>(null)
 
   const messages = messagesQuery.data ?? []
+  const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const memberById = new Map(members.map((member) => [member.user_id, member]))
 
   useEffect(() => {
@@ -109,7 +112,7 @@ export function TripChatSection({
               >
                 <Avatar
                   name={sender?.profile?.display_name ?? 'Traveler'}
-                  src={sender?.profile?.avatar_url}
+                  src={resolveAvatarUrl(sender?.profile?.avatar_url, avatarUrls)}
                   size="sm"
                 />
                 <div

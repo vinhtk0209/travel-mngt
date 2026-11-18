@@ -149,6 +149,18 @@ export async function createPlaceForTrip(
   return row.id
 }
 
+export async function getProfileAvatar(userId: string): Promise<string | null> {
+  const { data, error } = await admin()
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) throw new Error(`Could not read avatar: ${error.message}`)
+  const row = data as { avatar_url: string | null } | null
+  return row?.avatar_url ?? null
+}
+
 export async function getTripMemberRole(tripId: string, userId: string): Promise<string | null> {
   const { data, error } = await admin()
     .from('trip_members')

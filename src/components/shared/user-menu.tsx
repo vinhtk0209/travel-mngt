@@ -6,12 +6,18 @@ import { Avatar } from '@/components/ui/avatar'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/auth-context'
 import { useProfile } from '@/features/auth/hooks'
+import { resolveAvatarUrl } from '@/features/avatars/api'
+import { useAvatarUrls } from '@/features/avatars/hooks'
 import { getErrorMessage } from '@/utils/errors'
 import { cn } from '@/utils/cn'
 
 export function UserMenu() {
   const { user, signOut } = useAuth()
-  const { displayName, email } = useProfile()
+  const { displayName, email, data: profile } = useProfile()
+  const avatarUrls = useAvatarUrls([profile?.avatar_url])
+  const avatarSrc =
+    resolveAvatarUrl(profile?.avatar_url, avatarUrls) ??
+    (user?.user_metadata?.avatar_url as string | undefined)
   const [open, setOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -59,7 +65,7 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <Avatar name={displayName} src={user?.user_metadata?.avatar_url as string | undefined} size="sm" />
+        <Avatar name={displayName} src={avatarSrc} size="sm" />
         <span className="hidden max-w-28 truncate text-sm font-bold text-ink-soft sm:block">
           {displayName}
         </span>
@@ -74,7 +80,7 @@ export function UserMenu() {
           className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-3xl border border-border bg-surface p-2 shadow-lift animate-pop-in"
         >
           <div className="flex items-center gap-3 rounded-2xl bg-cream/70 px-3 py-3">
-            <Avatar name={displayName} size="md" />
+            <Avatar name={displayName} src={avatarSrc} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-extrabold text-ink">{displayName}</p>
               <p className="truncate text-xs text-ink-muted">{email ?? user?.email}</p>

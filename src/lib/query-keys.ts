@@ -12,5 +12,6 @@ export const queryKeys = {
     ['trip', tripId, 'assistant-preference'] as const,
   tripMessages: (tripId: string | undefined) => ['trip', tripId, 'messages'] as const,
   sharedTrip: (token: string | undefined) => ['share', token] as const,
+  avatarUrls: (paths: string[]) => ['avatar-urls', ...paths] as const,
   signedUrls: (paths: string[]) => ['signed-urls', ...paths] as const,
 }

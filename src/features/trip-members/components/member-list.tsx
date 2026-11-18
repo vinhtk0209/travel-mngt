@@ -2,6 +2,8 @@ import { Crown, ShieldCheck, UserMinus, Eye, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Avatar } from '@/components/ui/avatar'
+import { resolveAvatarUrl } from '@/features/avatars/api'
+import { useAvatarUrls } from '@/features/avatars/hooks'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -42,6 +44,7 @@ export function MemberList({
   const updateRole = useUpdateMemberRole(tripId)
   const removeMember = useRemoveMember(tripId)
   const transferOwnership = useTransferOwnership(tripId)
+  const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
 
   const [removing, setRemoving] = useState<TripMemberWithProfile | null>(null)
   const [transferring, setTransferring] = useState<TripMemberWithProfile | null>(null)
@@ -112,7 +115,7 @@ export function MemberList({
               className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-white/60 p-3 sm:flex-row sm:items-center"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <Avatar name={name} src={member.profile?.avatar_url} />
+                <Avatar name={name} src={resolveAvatarUrl(member.profile?.avatar_url, avatarUrls)} />
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 truncate text-sm font-extrabold text-ink">
                     {name}

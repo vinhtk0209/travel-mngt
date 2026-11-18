@@ -10,6 +10,8 @@ import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
 import { useAuth } from '@/features/auth/auth-context'
+import { resolveAvatarUrl } from '@/features/avatars/api'
+import { useAvatarUrls } from '@/features/avatars/hooks'
 import { TripChatSection } from '@/features/chat/components/trip-chat-section'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { ShareDialog } from '@/features/sharing/components/share-dialog'
@@ -33,10 +35,11 @@ export function TripDetailPage() {
   const coverUrl = trip?.cover_image ? coverUrls[trip.cover_image] : undefined
 
   const timing = trip ? getTripTiming(trip.start_date, trip.end_date) : 'undated'
+  const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const avatars = members.map((member) => ({
     user_id: member.user_id,
     display_name: member.profile?.display_name ?? 'Traveler',
-    avatar_url: member.profile?.avatar_url,
+    avatar_url: resolveAvatarUrl(member.profile?.avatar_url, avatarUrls),
   }))
 
   return (

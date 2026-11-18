@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { AvatarGroup } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { CoverImage } from '@/components/shared/cover-image'
+import { resolveAvatarUrl } from '@/features/avatars/api'
+import { useAvatarUrls } from '@/features/avatars/hooks'
 import { Progress } from '@/components/ui/progress'
 import { formatDateRange, getTripTiming, getTripTimingLabel } from '@/utils/date'
 import type { DashboardTrip } from '../types'
@@ -17,10 +19,11 @@ export function TripCard({ data, coverUrl }: TripCardProps) {
   const percent = totalPlaces > 0 ? (completedPlaces / totalPlaces) * 100 : 0
   const timing = getTripTiming(trip.start_date, trip.end_date)
 
+  const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const avatars = members.map((member) => ({
     user_id: member.user_id,
     display_name: member.profile?.display_name ?? 'Traveler',
-    avatar_url: member.profile?.avatar_url,
+    avatar_url: resolveAvatarUrl(member.profile?.avatar_url, avatarUrls),
   }))
 
   return (

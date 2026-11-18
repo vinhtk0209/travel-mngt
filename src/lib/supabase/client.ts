@@ -7,6 +7,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
 export const STORAGE_BUCKET = 'trip-images'
+export const AVATAR_BUCKET = 'avatars'
 
 // The fallback values let the app render a friendly setup screen instead of
 // crashing when environment variables are missing.
