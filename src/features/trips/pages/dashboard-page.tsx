@@ -9,7 +9,6 @@ import { PageHeader } from '@/components/ui/page-header'
 import { TripCardSkeleton } from '@/components/ui/skeleton'
 import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
 import type { TripIdea } from '@/features/assistant/suggestions'
-import { PendingInvitations } from '@/features/trip-invitations/components/pending-invitations'
 import { useProfile } from '@/features/auth/hooks'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { TripCard } from '../components/trip-card'
@@ -83,10 +82,6 @@ export function DashboardPage() {
           </div>
         }
       />
-
-      <div className="mt-6">
-        <PendingInvitations />
-      </div>
 
       {data.length > 0 ? (
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -50,6 +50,8 @@ export type Database = {
           cover_image: string | null
           owner_id: string
           assistant_mode: AssistantMode
+          share_token: string | null
+          share_role: TripRole
           created_at: string
           updated_at: string
         }
@@ -63,6 +65,8 @@ export type Database = {
           cover_image?: string | null
           owner_id: string
           assistant_mode?: AssistantMode
+          share_token?: string | null
+          share_role?: TripRole
           created_at?: string
           updated_at?: string
         }
@@ -75,6 +79,8 @@ export type Database = {
           cover_image?: string | null
           owner_id?: string
           assistant_mode?: AssistantMode
+          share_token?: string | null
+          share_role?: TripRole
           updated_at?: string
         }
         Relationships: []
@@ -299,6 +305,41 @@ export type Database = {
       reorder_trip_items: {
         Args: { p_trip_id: string; p_item_ids: string[] }
         Returns: undefined
+      }
+      get_or_create_trip_share: {
+        Args: { p_trip_id: string; p_role?: TripRole | null }
+        Returns: { token: string; role: TripRole }
+      }
+      set_trip_share_role: {
+        Args: { p_trip_id: string; p_role: TripRole }
+        Returns: undefined
+      }
+      regenerate_trip_share_token: {
+        Args: { p_trip_id: string }
+        Returns: string
+      }
+      disable_trip_share: {
+        Args: { p_trip_id: string }
+        Returns: undefined
+      }
+      resolve_trip_share: {
+        Args: { p_token: string }
+        Returns: {
+          id: string
+          name: string
+          destination: string
+          description: string | null
+          start_date: string | null
+          end_date: string | null
+          share_role: TripRole
+          owner_name: string
+          member_count: number
+          already_member: boolean
+        } | null
+      }
+      join_trip_by_share: {
+        Args: { p_token: string }
+        Returns: string
       }
       is_trip_member: {
         Args: { p_trip_id: string }

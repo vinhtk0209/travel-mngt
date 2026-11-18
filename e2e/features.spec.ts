@@ -90,15 +90,16 @@ test.describe.serial('new features', () => {
 
   test('owner creates a share link and another user joins', async ({ page, browser }) => {
     await loginAs(page, owner, tripPath)
-    await page.getByRole('button', { name: 'Invite / share' }).click()
+    await page.getByRole('button', { name: 'Share trip' }).click()
 
-    const dialog = page.getByRole('dialog', { name: 'Invite or share this trip' })
+    const dialog = page.getByRole('dialog', { name: 'Share this trip' })
     await expect(dialog).toBeVisible()
-    await dialog.getByRole('button', { name: 'Create invite' }).click()
-    await expect(dialog.getByText('Share link ready')).toBeVisible({ timeout: 25_000 })
+    await dialog.getByRole('button', { name: 'Create share link' }).click()
 
-    const inviteLink = await dialog.locator('#invite-link').inputValue()
-    expect(inviteLink).toContain('/invite/')
+    const linkInput = dialog.locator('#share-link')
+    await expect(linkInput).toHaveValue(/\/share\//, { timeout: 25_000 })
+    const inviteLink = await linkInput.inputValue()
+    expect(inviteLink).toContain('/share/')
     await shot(page, '04-share-link-ready.png')
     await dialog.getByRole('button', { name: 'Done' }).click()
 
@@ -106,10 +107,8 @@ test.describe.serial('new features', () => {
     const buddyPage = await browser.newPage()
     try {
       await loginAs(buddyPage, buddy, invitePath)
-      await expect(
-        buddyPage.getByRole('heading', { name: 'A trip is waiting for you' }),
-      ).toBeVisible()
-      await buddyPage.getByRole('button', { name: 'Accept and join' }).click()
+      await expect(buddyPage.getByRole('heading', { name: tripName })).toBeVisible()
+      await buddyPage.getByRole('button', { name: 'Join this trip' }).click()
       await buddyPage.waitForURL((url) => url.pathname === tripPath, { timeout: 25_000 })
       await expect(buddyPage.getByRole('heading', { name: tripName })).toBeVisible()
       await shot(buddyPage, '05-share-link-joined.png')

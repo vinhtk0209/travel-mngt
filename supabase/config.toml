@@ -409,12 +409,6 @@ port = 55327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 
-[functions.invite-member]
-enabled = true
-verify_jwt = true
-import_map = "./functions/invite-member/deno.json"
-entrypoint = "./functions/invite-member/index.ts"
-
 [functions.trip-assistant]
 enabled = true
 verify_jwt = true

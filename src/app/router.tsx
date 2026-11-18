@@ -54,10 +54,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/invite/:token',
-    lazy: loadProtectedPage(() =>
-      import('@/features/trip-invitations/pages/invitation-page').then((module) => ({
-        default: module.InvitationPage,
+    path: '/share/:token',
+    lazy: loadPage(() =>
+      import('@/features/sharing/pages/share-trip-page').then((module) => ({
+        default: module.ShareTripPage,
       })),
     ),
   },

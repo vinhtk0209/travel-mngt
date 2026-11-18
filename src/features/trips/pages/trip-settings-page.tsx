@@ -3,7 +3,6 @@ import {
   Bot,
   CalendarDays,
   LogOut,
-  Mail,
   MapPin,
   Pencil,
   ShieldAlert,
@@ -28,10 +27,9 @@ import { useAuth } from '@/features/auth/auth-context'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { TagManager } from '@/features/tags/components/tag-manager'
 import { useTripTags } from '@/features/tags/hooks'
-import { InviteMemberDialog } from '@/features/trip-members/components/invite-member-dialog'
 import { MemberList } from '@/features/trip-members/components/member-list'
 import { useLeaveTrip, useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
-import { TripInvitationsSection } from '@/features/trip-invitations/components/trip-invitations-section'
+import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripRealtime } from '@/hooks/use-trip-realtime'
 import { getErrorMessage } from '@/utils/errors'
 import { formatDateRange } from '@/utils/date'
@@ -53,7 +51,7 @@ export function TripSettingsPage() {
   useTripRealtime(tripId)
 
   const [editOpen, setEditOpen] = useState(false)
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
 
@@ -176,10 +174,10 @@ export function TripSettingsPage() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => setInviteOpen(true)}
+                  onClick={() => setShareOpen(true)}
                   leftIcon={<UserPlus className="h-3.5 w-3.5" />}
                 >
-                  Invite / share
+                  Share trip
                 </Button>
               ) : null}
             </div>
@@ -253,23 +251,6 @@ export function TripSettingsPage() {
           </section>
         ) : null}
 
-        {permissions.isOwner ? (
-          <section className="surface-card p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="rounded-2xl bg-sky-100 p-2 text-sky-500">
-                  <Mail className="h-4 w-4" />
-                </span>
-                <div>
-                  <h2 className="font-display text-lg font-extrabold">Pending invitations</h2>
-                  <p className="text-xs text-ink-muted">Email invites and share links waiting for a reply</p>
-                </div>
-              </div>
-            </div>
-            <TripInvitationsSection tripId={trip.id} />
-          </section>
-        ) : null}
-
         <section className="rounded-3xl border border-rose-200 bg-rose-50/50 p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <span className="rounded-2xl bg-white p-2 text-rose-500">
@@ -314,9 +295,9 @@ export function TripSettingsPage() {
       </div>
 
       <TripFormModal open={editOpen} onClose={() => setEditOpen(false)} trip={trip} />
-      <InviteMemberDialog
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
         tripId={trip.id}
         tripName={trip.name}
       />

@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, MapPin, Settings2, Sparkles, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MapPin, Settings2, Share2, Sparkles, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppShell } from '@/components/shared/app-shell'
@@ -10,7 +10,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
 import { useSignedImageUrls } from '@/features/images/hooks'
-import { InviteMemberDialog } from '@/features/trip-members/components/invite-member-dialog'
+import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
 import { TripPlacesSection } from '@/features/trip-items/components/trip-places-section'
 import { useTrip } from '../hooks'
@@ -21,7 +21,7 @@ export function TripDetailPage() {
   const tripQuery = useTrip(tripId)
   const membersQuery = useTripMembers(tripId)
   const permissions = useTripPermissions(tripId)
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
 
   const trip = tripQuery.data
@@ -133,10 +133,10 @@ export function TripDetailPage() {
               {permissions.isOwner ? (
                 <Button
                   variant="secondary"
-                  onClick={() => setInviteOpen(true)}
-                  leftIcon={<UserPlus className="h-4 w-4" />}
+                  onClick={() => setShareOpen(true)}
+                  leftIcon={<Share2 className="h-4 w-4" />}
                 >
-                  Invite / share
+                  Share trip
                 </Button>
               ) : null}
               {permissions.canEdit ? (
@@ -166,9 +166,9 @@ export function TripDetailPage() {
       ) : null}
 
       {trip ? (
-        <InviteMemberDialog
-          open={inviteOpen}
-          onClose={() => setInviteOpen(false)}
+        <ShareDialog
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
           tripId={trip.id}
           tripName={trip.name}
         />
