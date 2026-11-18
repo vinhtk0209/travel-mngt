@@ -8,5 +8,7 @@ export const queryKeys = {
   tripItems: (tripId: string | undefined) => ['trip', tripId, 'items'] as const,
   tripTags: (tripId: string | undefined) => ['trip', tripId, 'tags'] as const,
   tripImages: (tripId: string | undefined) => ['trip', tripId, 'images'] as const,
+  tripAssistantPreference: (tripId: string | undefined) =>
+    ['trip', tripId, 'assistant-preference'] as const,
   signedUrls: (paths: string[]) => ['signed-urls', ...paths] as const,
 }

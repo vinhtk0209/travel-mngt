@@ -1,17 +1,19 @@
 import {
   ArrowLeft,
+  Bot,
   CalendarDays,
   LogOut,
   Mail,
   MapPin,
   Pencil,
   ShieldAlert,
+  Sparkles,
   Tags,
   Trash2,
   UserPlus,
   Users,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '@/components/shared/app-shell'
 import { CoverImage } from '@/components/shared/cover-image'
@@ -21,6 +23,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ErrorState } from '@/components/ui/error-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useSetTripAssistantMode } from '@/features/assistant/hooks'
 import { useAuth } from '@/features/auth/auth-context'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { TagManager } from '@/features/tags/components/tag-manager'
@@ -30,7 +33,9 @@ import { MemberList } from '@/features/trip-members/components/member-list'
 import { useLeaveTrip, useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
 import { TripInvitationsSection } from '@/features/trip-invitations/components/trip-invitations-section'
 import { useTripRealtime } from '@/hooks/use-trip-realtime'
+import { getErrorMessage } from '@/utils/errors'
 import { formatDateRange } from '@/utils/date'
+import { cn } from '@/utils/cn'
 import { TripFormModal } from '../components/trip-form-modal'
 import { useDeleteTrip, useTrip } from '../hooks'
 
@@ -43,6 +48,7 @@ export function TripSettingsPage() {
   const permissions = useTripPermissions(tripId)
   const tagsQuery = useTripTags(tripId)
   const deleteTrip = useDeleteTrip()
+  const setAssistantMode = useSetTripAssistantMode(tripId)
   const leaveTrip = useLeaveTrip(tripId)
   useTripRealtime(tripId)
 
@@ -205,6 +211,52 @@ export function TripSettingsPage() {
           <section className="surface-card p-5">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
+                <span className="rounded-2xl bg-lavender-100 p-2 text-lavender-500">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="font-display text-lg font-extrabold">Wanderbot default</h2>
+                  <p className="text-xs text-ink-muted">
+                    New members start in this mode. Everyone can switch for themselves.
+                  </p>
+                </div>
+              </div>
+              {setAssistantMode.isPending ? (
+                <span className="text-[11px] font-bold text-ink-muted">Saving…</span>
+              ) : null}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <AssistantModeCard
+                active={trip.assistant_mode === 'basic'}
+                icon={<Bot className="h-4 w-4" />}
+                title="Basic"
+                description="Curated packing, budget and itinerary tips. No API key, always available."
+                onClick={() => setAssistantMode.mutate('basic')}
+                disabled={setAssistantMode.isPending}
+              />
+              <AssistantModeCard
+                active={trip.assistant_mode === 'gemini'}
+                icon={<Sparkles className="h-4 w-4" />}
+                title="Gemini AI"
+                description="Free-form answers grounded in this trip. Needs a Gemini API key on the server."
+                onClick={() => setAssistantMode.mutate('gemini')}
+                disabled={setAssistantMode.isPending}
+              />
+            </div>
+
+            {setAssistantMode.isError ? (
+              <p role="alert" className="mt-3 text-xs font-semibold text-rose-600">
+                {getErrorMessage(setAssistantMode.error, 'Could not save the assistant mode')}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+
+        {permissions.isOwner ? (
+          <section className="surface-card p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <span className="rounded-2xl bg-sky-100 p-2 text-sky-500">
                   <Mail className="h-4 w-4" />
                 </span>
@@ -299,5 +351,45 @@ export function TripSettingsPage() {
         }
       />
     </AppShell>
+  )
+}
+
+function AssistantModeCard({
+  active,
+  icon,
+  title,
+  description,
+  onClick,
+  disabled,
+}: {
+  active: boolean
+  icon: ReactNode
+  title: string
+  description: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      disabled={disabled}
+      className={cn(
+        'rounded-2xl border p-4 text-left transition disabled:opacity-60',
+        active
+          ? 'border-coral-300 bg-coral-50/70 shadow-card'
+          : 'border-border bg-white/70 hover:border-coral-200 hover:bg-coral-50/40',
+      )}
+    >
+      <span className="flex items-center gap-2 text-sm font-extrabold text-ink">
+        <span className={cn('rounded-xl p-1.5', active ? 'bg-coral-100 text-coral-600' : 'bg-cream text-ink-muted')}>
+          {icon}
+        </span>
+        {title}
+        {active ? <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-coral-600">Active</span> : null}
+      </span>
+      <span className="mt-2 block text-xs leading-relaxed text-ink-muted">{description}</span>
+    </button>
   )
 }

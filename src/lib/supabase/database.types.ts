@@ -9,6 +9,7 @@ export type Json =
 export type TripRole = 'owner' | 'editor' | 'viewer'
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 export type ItemStatus = 'todo' | 'completed'
+export type AssistantMode = 'basic' | 'gemini'
 
 export type Database = {
   public: {
@@ -48,6 +49,7 @@ export type Database = {
           end_date: string | null
           cover_image: string | null
           owner_id: string
+          assistant_mode: AssistantMode
           created_at: string
           updated_at: string
         }
@@ -60,6 +62,7 @@ export type Database = {
           end_date?: string | null
           cover_image?: string | null
           owner_id: string
+          assistant_mode?: AssistantMode
           created_at?: string
           updated_at?: string
         }
@@ -71,6 +74,28 @@ export type Database = {
           end_date?: string | null
           cover_image?: string | null
           owner_id?: string
+          assistant_mode?: AssistantMode
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trip_assistant_preferences: {
+        Row: {
+          trip_id: string
+          user_id: string
+          mode: AssistantMode
+          updated_at: string
+        }
+        Insert: {
+          trip_id: string
+          user_id: string
+          mode: AssistantMode
+          updated_at?: string
+        }
+        Update: {
+          trip_id?: string
+          user_id?: string
+          mode?: AssistantMode
           updated_at?: string
         }
         Relationships: []

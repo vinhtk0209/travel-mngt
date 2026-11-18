@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, MapPin, Settings2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MapPin, Settings2, Sparkles, UserPlus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppShell } from '@/components/shared/app-shell'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ErrorState } from '@/components/ui/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { InviteMemberDialog } from '@/features/trip-members/components/invite-member-dialog'
 import { useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
@@ -21,6 +22,7 @@ export function TripDetailPage() {
   const membersQuery = useTripMembers(tripId)
   const permissions = useTripPermissions(tripId)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   const trip = tripQuery.data
   const members = membersQuery.data ?? []
@@ -121,6 +123,13 @@ export function TripDetailPage() {
             </div>
 
             <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setAssistantOpen(true)}
+                leftIcon={<Sparkles className="h-4 w-4" />}
+              >
+                Ask Wanderbot
+              </Button>
               {permissions.isOwner ? (
                 <Button
                   variant="secondary"
@@ -144,6 +153,17 @@ export function TripDetailPage() {
           <TripPlacesSection tripId={trip.id} canEdit={permissions.canEdit} />
         </div>
       )}
+
+      {trip ? (
+        <TripAssistantDialog
+          open={assistantOpen}
+          onClose={() => setAssistantOpen(false)}
+          tripId={trip.id}
+          tripName={trip.name}
+          tripDestination={trip.destination ?? undefined}
+          defaultMode={trip.assistant_mode}
+        />
+      ) : null}
 
       {trip ? (
         <InviteMemberDialog
