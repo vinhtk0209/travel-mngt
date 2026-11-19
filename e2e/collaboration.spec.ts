@@ -1,17 +1,15 @@
 import { expect, test } from '@playwright/test'
 import { createTestUser } from './support/admin'
 import {
-  acceptInvitationViaUi,
   addPlaceViaUi,
   createTripViaUi,
-  inviteMemberThroughUi,
   loginAs,
   signOutViaUi,
   uniqueName,
 } from './support/ui'
 
 test.describe('collaboration', () => {
-  test('owner invites an editor, then downgrades them to viewer', async ({ page }) => {
+  test('owner shares an editable link, then downgrades the editor to viewer', async ({ page }) => {
     const owner = await createTestUser('owner')
     const editor = await createTestUser('editor')
     const tripName = uniqueName('Shared trip')
@@ -21,16 +19,22 @@ test.describe('collaboration', () => {
       name: tripName,
       destination: 'Ninh Binh',
     })
+    await page.goto(tripPath)
 
-    const invitePath = await inviteMemberThroughUi(page, {
-      tripPath,
-      email: editor.email,
-      role: 'editor',
-    })
+    await page.getByRole('button', { name: 'Share trip' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Share this trip' })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Create share link' }).click()
+    const linkInput = dialog.locator('#share-link')
+    await expect(linkInput).toHaveValue(/\/share\//, { timeout: 25_000 })
+    const sharePath = new URL(await linkInput.inputValue()).pathname
+    await dialog.getByRole('button', { name: 'Done' }).click()
+    await expect(dialog).toBeHidden()
     await signOutViaUi(page)
 
-    await loginAs(page, editor)
-    await acceptInvitationViaUi(page, invitePath)
+    await loginAs(page, editor, sharePath)
+    await page.getByRole('button', { name: 'Join this trip' }).click()
+    await page.waitForURL((url) => url.pathname === tripPath, { timeout: 25_000 })
     await expect(page.getByRole('heading', { name: tripName })).toBeVisible()
     await addPlaceViaUi(page, {
       name: uniqueName('Editor pick'),
@@ -38,16 +42,14 @@ test.describe('collaboration', () => {
     })
     await signOutViaUi(page)
 
-    await loginAs(page, owner)
-    await page.goto(`${tripPath}/settings`)
+    await loginAs(page, owner, `${tripPath}/settings`)
     const roleSelect = page.getByLabel(`Role for ${editor.displayName}`)
     await expect(roleSelect).toBeVisible()
     await roleSelect.selectOption('viewer')
     await expect(page.getByText('Member role updated')).toBeVisible()
     await signOutViaUi(page)
 
-    await loginAs(page, editor)
-    await page.goto(tripPath)
+    await loginAs(page, editor, tripPath)
     await expect(page.getByText('View only', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: /Add place|Add your first place/ })).toHaveCount(0)
   })

@@ -80,7 +80,7 @@ test.describe.serial('new features', () => {
     await mapLink.hover()
     await shot(page, '02-maps-list.png')
 
-    await page.getByRole('button', { name: 'Card view' }).click()
+    await page.getByRole('button', { name: 'Grid view' }).click()
     await expect(page.getByRole('button', { name: `Edit ${mapPlaceName}` })).toBeVisible()
     await expect(page.getByRole('button', { name: `Delete ${mapPlaceName}` })).toBeVisible()
     await expect(mapLink).toBeVisible()

@@ -96,7 +96,7 @@ test.describe.serial('link sharing', () => {
     await expect(page.getByText('Ninh Binh, Vietnam')).toBeVisible()
     await expect(page.getByText(/shared this trip with you/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Sign in to join' })).toBeVisible()
-    await expect(page.getByText(/Joining gives you viewer access/)).toBeVisible()
+    await expect(page.getByText(/Joining gives you viewer access/i)).toBeVisible()
     await shot(page, '03-anonymous-preview.png')
   })
 
@@ -112,7 +112,7 @@ test.describe.serial('link sharing', () => {
     await expect(page.getByRole('button', { name: /Add place|Add your first place/ })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Trip settings' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Share trip' })).toHaveCount(0)
-    await expect(page.getByText('viewer', { exact: true })).toBeVisible()
+    await expect(page.getByText('Viewer', { exact: true })).toBeVisible()
     await shot(page, '05-viewer-trip-read-only.png')
 
     expect(await getTripMemberRole(tripId, buddy.id)).toBe('viewer')
