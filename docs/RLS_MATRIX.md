@@ -22,11 +22,12 @@ Legend: `M` = member, `O` = owner, `E` = owner or editor, `I` = authenticated in
 | `profiles` | own profile **or** shares a trip | trigger only | own profile | — (cascades from auth) |
 | `trips` | M | `owner_id = auth.uid()` | E (owner_id change blocked by trigger) | O |
 | `trip_members` | M | O, `role <> 'owner'` | O, `role <> 'owner'` | O; or self when not owner |
-| `trip_invitations` | O **or** `lower(email) = jwt.email` | **none** (Edge Function/service role only) | **none** (RPC only) | O |
+| `trip_invitations` (legacy) | O **or** `lower(email) = jwt.email` | **none** | **none** (RPC only) | O |
 | `trip_items` | M | E + `created_by = auth.uid()` | E | E |
 | `tags` | M | E | E | E |
 | `trip_item_tags` | M (via item) | E (via item) | — | E (via item) |
 | `trip_item_images` | M (via item) | E (via item) | — | E (via item) |
+| `trip_messages` | M | E (`sender_id = auth.uid()`) | — | — |
 
 ## Storage (`trip-images`, private bucket)
 
@@ -42,27 +43,38 @@ Object path convention: `<trip_id>/<item_id or "cover">/<uuid>.<ext>`.
 Uploads are limited to 10 MB and `image/jpeg`, `image/png`, `image/webp`, `image/gif`.
 The bucket is **not public**; the client requests 1-hour signed URLs.
 
+## Storage (`avatars`, private bucket)
+
+Object path convention: `<user_id>/<uuid>.<ext>`.
+
+| Operation | Policy |
+| --- | --- |
+| SELECT (signed URL creation) | own avatar or a user who shares a trip with the caller |
+| INSERT / UPDATE / DELETE | own folder only (`<user_id>`) |
+
+The bucket is **not public**; avatar URLs are signed and cached by React Query.
+
 ## Privileged RPCs
 
 | RPC | Caller check | Effect |
 | --- | --- | --- |
-| `accept_trip_invitation(token)` | auth email matches invitation email, pending, not expired | insert membership, mark invitation accepted |
-| `accept_trip_invitation_by_id(id)` | same checks using invitation id | same |
-| `reject_trip_invitation(token)` / `_by_id` | same checks | mark invitation rejected |
+| `get_or_create_trip_share(trip_id, role)` | caller is owner | return/create the link token and role |
+| `set_trip_share_role(trip_id, role)` | caller is owner | update the role granted by the link |
+| `regenerate_trip_share_token(trip_id)` | caller is owner | rotate the token, revoking old links |
+| `disable_trip_share(trip_id)` | caller is owner | clear the token |
+| `resolve_trip_share(token)` | any signed-in caller | preview trip name/destination without membership |
+| `join_trip_by_share(token)` | any signed-in caller, valid token | insert one membership with `share_role` |
 | `transfer_trip_ownership(trip_id, new_owner)` | caller is current owner; target is a member | swap roles atomically |
 | `reorder_trip_items(trip_id, item_ids[])` | `can_edit_trip` | rewrite sort order |
-| `list_my_invitations()` | filters `lower(email) = jwt.email` | expose trip name/inviter to invitee before membership |
 
 ## Edge Function
 
-`invite-member` (JWT required):
+`trip-assistant` (JWT required):
 
 1. Resolves the caller from the Authorization header.
-2. Verifies `trips.owner_id = caller`.
-3. Validates email/role; rejects inviting the owner, the caller, or an existing member.
-4. Generates a 32-byte token and stores only `sha256(token)`.
-5. Upserts a pending invitation (7-day expiry) with the **service role** — the key never reaches the browser.
-6. Sends email via Resend when configured; otherwise returns the invite link to the owner.
+2. Verifies the caller is a trip member before answering.
+3. Basic mode returns a deterministic local-style reply; Gemini mode calls the Gemini API.
+4. `GEMINI_API_KEY` never reaches the browser; a missing key returns a clear configuration error.
 
 ## Trigger-level guards
 
@@ -77,5 +89,5 @@ The bucket is **not public**; the client requests 1-hour signed URLs.
 
 - No `service_role` key in frontend code or Vite env variables.
 - No client-trusted role checks: hiding buttons is UX, not security.
-- No public image bucket.
-- No invitation insertion directly from the browser.
+- No public image or avatar bucket.
+- No share-token mutation from the browser; only the owner RPCs above.
