@@ -8,6 +8,51 @@ in Git. The tag message is a short summary; this file is the detailed record.
 
 Nothing yet.
 
+## [0.4.0] - 2026-11-19
+
+### Added
+
+- English and Vietnamese localization with a persisted language preference,
+  translated dates, validation/error messages, and a profile-synced `locale`.
+  The trip assistant answers in the language of the latest user message.
+- Realtime trip chat with author avatars, optimistic sending, message
+  deduplication, and read-only access for viewers.
+- Switchable Basic and Gemini assistant modes. Basic mode works without a key;
+  Gemini mode uses the `trip-assistant` Edge Function and `GEMINI_API_KEY`.
+- Private profile avatars in the new `avatars` bucket, served through signed
+  URLs and shown across trips, members, chat, and the user menu.
+- Link-based sharing with owner controls to rotate, stop, and create
+  `editor`/`viewer` share links.
+- Accessible tag colour editing: WCAG-aware foreground colours, dark-mode
+  contrast, and a dedicated E2E colour suite.
+- E2E evidence suites for tags, chatbot, sharing, chat, avatars, and i18n.
+
+### Changed
+
+- Authentication remains social-only (Google/GitHub); the auth, collaboration,
+  features, and sharing E2E suites now match the current product.
+- Trip chat and member surfaces distinguish people with uploaded avatars while
+  falling back to initials.
+- Assistant suggestions, replies, and tag labels follow the active locale.
+
+### Backend / deployment
+
+- Migrations added: `20260101000400_assistant_modes.sql`,
+  `20260101000500_share_management.sql`, `20260101000600_trip_chat.sql`,
+  `20260101000700_avatars.sql`, and `20260101000800_profile_locale.sql`.
+- Edge Function `trip-assistant` deployed alongside the frontend; Gemini mode
+  needs the `GEMINI_API_KEY` secret.
+- The `avatars` storage bucket is private; signed URLs follow profile access
+  rules.
+
+### Verification
+
+- `npm run typecheck` - pass
+- `npm run typecheck:e2e` - pass
+- `npm run test:run` - 9 files, 47 tests pass
+- `npm run build` - pass
+- `npm run test:e2e` - 28/28 pass
+
 ## [0.3.0] - 2026-11-17
 
 ### Added

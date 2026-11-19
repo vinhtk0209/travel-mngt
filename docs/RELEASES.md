@@ -19,10 +19,10 @@ deployment must map to one tag. A tag is never moved after it is pushed.
    npm run release:verify
    ```
 
-2. With the local Supabase stack running, run the feature evidence suite:
+2. With the local Supabase stack running, run the full E2E suite and refresh evidence:
 
    ```powershell
-   npx playwright test e2e/features.spec.ts
+   npm run test:e2e
    ```
 
 3. Update `CHANGELOG.md` (move items out of `Unreleased`) and bump the package
@@ -54,12 +54,13 @@ deployment must map to one tag. A tag is never moved after it is pushed.
 
    ```powershell
    npx supabase db push --remote
-   npx supabase functions deploy invite-member
+   npx supabase functions deploy trip-assistant
    ```
 
 7. In Vercel, open the project's **Deployments** list, confirm the new
    production deployment is the release commit, and run a short smoke test
-   (sign in, open a trip, add a place, toggle dark mode, open an invite link).
+   (sign in, switch language, open a trip, add a place, send a chat message,
+   toggle dark mode, join a share link).
 
 ## Identify what is deployed
 
