@@ -15,6 +15,7 @@ import {
 import { getErrorMessage } from '@/utils/errors'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/app/theme-provider'
+import { useI18n } from '@/i18n/i18n-context'
 import { useCreateTag, useDeleteTag, useUpdateTag } from '../hooks'
 import type { Tag } from '../api'
 
@@ -25,6 +26,7 @@ type TagManagerProps = {
 }
 
 export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
+  const { t } = useI18n()
   const createTag = useCreateTag(tripId)
   const updateTag = useUpdateTag(tripId)
   const deleteTag = useDeleteTag(tripId)
@@ -44,9 +46,9 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
       await createTag.mutateAsync({ name, color: normalizeHexColor(newColor) })
       setNewName('')
       setNewColor(pickTagColor(tags.length + 1))
-      toast.success('Tag created')
+      toast.success(t('tags.created'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not create the tag'))
+      toast.error(getErrorMessage(error, t('tags.createError')))
     }
   }
 
@@ -67,9 +69,9 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
         color: normalizeHexColor(editColor),
       })
       setEditing(null)
-      toast.success('Tag updated')
+      toast.success(t('tags.updated'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not update the tag'))
+      toast.error(getErrorMessage(error, t('tags.updateError')))
     }
   }
 
@@ -78,9 +80,9 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
     try {
       await deleteTag.mutateAsync(deleting.id)
       setDeleting(null)
-      toast.success('Tag deleted')
+      toast.success(t('tags.deleted'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not delete the tag'))
+      toast.error(getErrorMessage(error, t('tags.deleteError')))
     }
   }
 
@@ -88,7 +90,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {tags.length === 0 ? (
-          <p className="text-sm text-ink-muted">No tags yet. Add the first one below.</p>
+          <p className="text-sm text-ink-muted">{t('tags.emptyManager')}</p>
         ) : (
           tags.map((tag) => (
             <span key={tag.id} className="group inline-flex items-center">
@@ -99,7 +101,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
                     type="button"
                     onClick={() => startEditing(tag)}
                     className="rounded-full p-1 text-ink-muted hover:bg-white hover:text-coral-600"
-                    aria-label={`Edit ${tag.name}`}
+                    aria-label={t('places.editName', { name: tag.name })}
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
@@ -107,7 +109,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
                     type="button"
                     onClick={() => setDeleting(tag)}
                     className="rounded-full p-1 text-ink-muted hover:bg-rose-50 hover:text-rose-500"
-                    aria-label={`Delete ${tag.name}`}
+                    aria-label={t('places.deleteName', { name: tag.name })}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -121,12 +123,12 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
       {editing ? (
         <div className="rounded-2xl border border-coral-200 bg-coral-50/50 p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-bold text-ink-soft">Editing “{editing.name}”</p>
+            <p className="text-xs font-bold text-ink-soft">{t('tags.editing', { name: editing.name })}</p>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wide text-ink-muted">
-                Preview
+                {t('tags.preview')}
               </span>
-              <TagPill name={editName.trim() || 'Tag'} color={editColor} />
+              <TagPill name={editName.trim() || t('tags.tagFallback')} color={editColor} />
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -134,15 +136,19 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
               value={editName}
               onChange={(event) => setEditName(event.target.value)}
               className="h-9 flex-1"
-              aria-label="Tag name"
+              aria-label={t('tags.tagName')}
             />
-            <ColorPicker value={editColor} onChange={setEditColor} label="Edit tag colour" />
+            <ColorPicker
+              value={editColor}
+              onChange={setEditColor}
+              label={t('tags.editColour')}
+            />
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void handleUpdate()} isLoading={updateTag.isPending}>
-                <Check className="h-3.5 w-3.5" /> Save
+                <Check className="h-3.5 w-3.5" /> {t('tags.save')}
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setEditing(null)}>
-                <X className="h-3.5 w-3.5" /> Cancel
+                <X className="h-3.5 w-3.5" /> {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -159,12 +165,12 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
             <Input
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
-              placeholder="New tag name"
+              placeholder={t('tags.newTagName')}
               className="pl-10"
-              aria-label="New tag name"
+              aria-label={t('tags.newTagName')}
             />
           </div>
-          <ColorPicker value={newColor} onChange={setNewColor} label="New tag colour" />
+          <ColorPicker value={newColor} onChange={setNewColor} label={t('tags.newColour')} />
           <Button
             type="submit"
             size="md"
@@ -172,7 +178,7 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
             leftIcon={<Plus className="h-4 w-4" />}
             disabled={!newName.trim()}
           >
-            Add tag
+            {t('tags.add')}
           </Button>
         </form>
       ) : null}
@@ -182,13 +188,9 @@ export function TagManager({ tripId, tags, canEdit }: TagManagerProps) {
         onClose={() => setDeleting(null)}
         onConfirm={() => void handleDelete()}
         isLoading={deleteTag.isPending}
-        title="Delete this tag?"
-        confirmLabel="Delete tag"
-        description={
-          <>
-            “{deleting?.name}” will be removed from every place in this trip. This cannot be undone.
-          </>
-        }
+        title={t('places.deleteTagTitle')}
+        confirmLabel={t('places.deleteTagButton')}
+        description={<>{t('tags.deleteBody', { name: deleting?.name ?? '' })}</>}
       />
     </div>
   )
@@ -203,6 +205,7 @@ function ColorPicker({
   onChange: (value: string) => void
   label?: string
 }) {
+  const { t } = useI18n()
   const { resolved } = useTheme()
   const normalized = normalizeHexColor(value)
   const isPreset = TAG_COLOR_PRESETS.some((preset) => preset.value.toUpperCase() === normalized)
@@ -240,7 +243,7 @@ function ColorPicker({
 
       <label
         className="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink/30 bg-surface"
-        title="Custom colour"
+        title={t('tags.customColour')}
         style={
           isPreset
             ? undefined
@@ -261,7 +264,7 @@ function ColorPicker({
           value={normalized}
           onChange={(event) => onChange(event.target.value.toUpperCase())}
           className="absolute inset-0 cursor-pointer opacity-0"
-          aria-label={`${label} custom`}
+          aria-label={`${label} ${t('tags.customColour')}`}
         />
       </label>
     </div>

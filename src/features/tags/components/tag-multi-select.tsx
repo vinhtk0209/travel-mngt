@@ -8,6 +8,7 @@ import { useCreateTag } from '../hooks'
 import type { Tag } from '../api'
 import { getErrorMessage } from '@/utils/errors'
 import { pickTagColor } from '@/utils/tags'
+import { useI18n } from '@/i18n/i18n-context'
 
 type TagMultiSelectProps = {
   tripId: string
@@ -24,6 +25,7 @@ export function TagMultiSelect({
   onChange,
   canEdit,
 }: TagMultiSelectProps) {
+  const { t } = useI18n()
   const createTag = useCreateTag(tripId)
   const [isCreating, setIsCreating] = useState(false)
   const [name, setName] = useState('')
@@ -47,9 +49,9 @@ export function TagMultiSelect({
       onChange([...selectedIds, tag.id])
       setName('')
       setIsCreating(false)
-      toast.success('Tag created')
+      toast.success(t('tags.created'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not create the tag'))
+      toast.error(getErrorMessage(error, t('tags.createError')))
     }
   }
 
@@ -77,7 +79,7 @@ export function TagMultiSelect({
             onClick={() => setIsCreating(true)}
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-coral-300 px-2.5 py-1 text-xs font-bold text-coral-600 hover:bg-coral-50"
           >
-            <Plus className="h-3 w-3" /> New tag
+            <Plus className="h-3 w-3" /> {t('tags.new')}
           </button>
         ) : null}
       </div>
@@ -96,9 +98,9 @@ export function TagMultiSelect({
                   void handleCreate()
                 }
               }}
-              placeholder="Tag name"
+              placeholder={t('tags.namePlaceholder')}
               className="h-9 pl-8 text-sm"
-              aria-label="New tag name"
+              aria-label={t('tags.newTagName')}
             />
           </div>
           <Button
@@ -108,10 +110,10 @@ export function TagMultiSelect({
             disabled={!name.trim()}
             onClick={() => void handleCreate()}
           >
-            Add
+            {t('tags.addShort')}
           </Button>
           <Button type="button" size="sm" variant="ghost" onClick={() => setIsCreating(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       ) : null}

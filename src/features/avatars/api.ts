@@ -1,4 +1,5 @@
 import { AVATAR_BUCKET, supabase } from '@/lib/supabase/client'
+import { translate } from '@/i18n/translate'
 import type { Tables } from '@/lib/supabase/database.types'
 import {
   MAX_IMAGE_BYTES,
@@ -27,7 +28,7 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 
   const compressed = await compressImage(normalizeImageFile(file))
   if (compressed.size > Math.min(MAX_IMAGE_BYTES, AVATAR_BUCKET_LIMIT)) {
-    throw new Error('This photo is too large for an avatar. Try a smaller image.')
+    throw new Error(translate('avatars.errors.tooLarge'))
   }
 
   const path = `${userId}/avatar-${crypto.randomUUID()}.${fileExtension(compressed)}`
@@ -41,10 +42,10 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 
   if (uploadError) {
     if (/mime|content type|not supported/i.test(uploadError.message)) {
-      throw new Error('Use a JPG, PNG or WEBP image for your avatar.')
+      throw new Error(translate('avatars.errors.type'))
     }
     if (/row-level security|not authorized|permission|denied/i.test(uploadError.message)) {
-      throw new Error('You can only upload your own avatar.')
+      throw new Error(translate('avatars.errors.ownOnly'))
     }
     throw new Error(uploadError.message)
   }

@@ -20,6 +20,7 @@ import {
   validateImageFile,
 } from '@/utils/image'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { useCreatePlace, useUpdatePlace } from '../hooks'
 import type { TripItemWithMeta } from '../api'
 import { placeFormSchema, type PlaceFormValues } from '../schemas'
@@ -33,6 +34,7 @@ type PlaceFormModalProps = {
 }
 
 export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormModalProps) {
+  const { t } = useI18n()
   const isEditing = Boolean(item)
   const createPlace = useCreatePlace(tripId)
   const updatePlace = useUpdatePlace(tripId)
@@ -111,7 +113,7 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
     const room = Math.max(0, MAX_IMAGES_PER_PLACE - visibleExistingImages.length - files.length)
     const toAdd = accepted.slice(0, room)
     if (accepted.length > room) {
-      toast.error(`You can keep up to ${MAX_IMAGES_PER_PLACE} photos per place.`)
+      toast.error(t('placeForm.photoLimit', { max: MAX_IMAGES_PER_PLACE }))
     }
     if (rejected.length > 0) {
       toast.error(rejected[0])
@@ -141,17 +143,17 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
           removedImages:
             item.images.filter((image) => removedImageIds.has(image.id)),
         })
-        toast.success('Place updated')
+        toast.success(t('placeForm.updated'))
       } else {
         await createPlace.mutateAsync({
           values: { ...values, tagIds: selectedTagIds },
           files,
         })
-        toast.success('Place added to your trip')
+        toast.success(t('placeForm.added'))
       }
       onClose()
     } catch (error) {
-      setServerError(getErrorMessage(error, 'Could not save this place'))
+      setServerError(getErrorMessage(error, t('placeForm.saveError')))
     }
   })
 
@@ -161,19 +163,15 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
     <Modal
       open={open}
       onClose={onClose}
-      title={isEditing ? 'Edit place' : 'Add a place'}
-      description={
-        isEditing
-          ? 'Keep the details fresh — your travel buddies will see the update.'
-          : 'A restaurant, a viewpoint, a tiny coffee shop… collect it all.'
-      }
+      title={isEditing ? t('placeForm.editTitle') : t('placeForm.addTitle')}
+      description={isEditing ? t('placeForm.editDescription') : t('placeForm.addDescription')}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={isBusy}>
-            Cancel
+            {t('placeForm.cancel')}
           </Button>
           <Button type="submit" form="place-form" isLoading={isBusy}>
-            {isEditing ? 'Save place' : 'Add place'}
+            {isEditing ? t('placeForm.save') : t('placeForm.add')}
           </Button>
         </>
       }
@@ -186,40 +184,40 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
           </div>
         ) : null}
 
-        <Field label="Place name" htmlFor="place-name" error={errors.name?.message} required>
+        <Field label={t('placeForm.name')} htmlFor="place-name" error={errors.name?.message} required>
           <Input
             id="place-name"
-            placeholder="Little corner coffee shop"
+            placeholder={t('placeForm.namePlaceholder')}
             {...register('name')}
           />
         </Field>
 
         <Field
-          label="Address"
+          label={t('placeForm.address')}
           htmlFor="place-address"
           error={errors.address?.message}
-          hint="Leave empty if you only know the name."
+          hint={t('placeForm.addressHint')}
         >
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
             <Input
               id="place-address"
               className="pl-10"
-              placeholder="27 Truc Lam, Da Lat"
+              placeholder={t('placeForm.addressPlaceholder')}
               {...register('address')}
             />
           </div>
         </Field>
 
         <Field
-          label="Google Maps URL"
+          label={t('placeForm.mapsUrl')}
           htmlFor="place-maps"
           error={errors.googleMapsUrl?.message}
-          hint="Paste a Google Maps link, or leave blank and we will build a search link from the address."
+          hint={t('placeForm.mapsHint')}
         >
           <Input
             id="place-maps"
-            placeholder="https://maps.app.goo.gl/…"
+            placeholder={t('placeForm.mapsPlaceholder')}
             {...register('googleMapsUrl')}
           />
         </Field>
@@ -231,29 +229,29 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-mint-600 hover:text-mint-700"
           >
-            <ExternalLink className="h-3.5 w-3.5" /> Test this Maps link
+            <ExternalLink className="h-3.5 w-3.5" /> {t('placeForm.testMaps')}
           </a>
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
-          <Field label="Notes" htmlFor="place-notes" error={errors.notes?.message}>
+          <Field label={t('placeForm.notes')} htmlFor="place-notes" error={errors.notes?.message}>
             <Textarea
               id="place-notes"
               rows={3}
-              placeholder="Get the coconut coffee, sit by the window…"
+              placeholder={t('placeForm.notesPlaceholder')}
               {...register('notes')}
             />
           </Field>
 
-          <Field label="Status" htmlFor="place-status" error={errors.status?.message}>
+          <Field label={t('placeForm.status')} htmlFor="place-status" error={errors.status?.message}>
             <Select id="place-status" {...register('status')}>
-              <option value="todo">To do</option>
-              <option value="completed">Completed</option>
+              <option value="todo">{t('placeForm.todo')}</option>
+              <option value="completed">{t('placeForm.completed')}</option>
             </Select>
           </Field>
         </div>
 
-        <Field label="Tags">
+        <Field label={t('placeForm.tags')}>
           <TagMultiSelect
             tripId={tripId}
             tags={tags}
@@ -264,7 +262,7 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
         </Field>
 
         <div>
-          <p className="mb-2 text-sm font-bold text-ink-soft">Photos</p>
+          <p className="mb-2 text-sm font-bold text-ink-soft">{t('placeForm.photos')}</p>
 
           {visibleExistingImages.length > 0 ? (
             <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -286,7 +284,7 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
                     type="button"
                     onClick={() => handleRemoveExistingImage(image.id)}
                     className="absolute right-1 top-1 rounded-full bg-white/90 p-1.5 text-rose-500 shadow-sm transition hover:bg-rose-50"
-                    aria-label={`Remove ${image.file_name}`}
+                    aria-label={t('placeForm.removeFile', { name: image.file_name })}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -307,7 +305,7 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
                     type="button"
                     onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}
                     className="absolute right-1 top-1 rounded-full bg-white/90 p-1.5 text-ink-soft shadow-sm transition hover:bg-rose-50 hover:text-rose-500"
-                    aria-label={`Remove ${preview.name}`}
+                    aria-label={t('placeForm.removeFile', { name: preview.name })}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -324,11 +322,10 @@ export function PlaceFormModal({ open, onClose, tripId, item, tags }: PlaceFormM
             onClick={() => fileInputRef.current?.click()}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-coral-200 bg-cream/60 py-5 text-sm font-bold text-ink-muted transition hover:border-coral-300 hover:text-coral-600"
           >
-            <ImagePlus className="h-5 w-5" /> Add photos
+            <ImagePlus className="h-5 w-5" /> {t('placeForm.addPhotos')}
           </button>
           <p className="mt-1.5 text-xs text-ink-muted">
-            JPG, PNG, WEBP or GIF · up to 10 MB each · up to {MAX_IMAGES_PER_PLACE} photos. Photos
-            are compressed in your browser and uploaded when you save.
+            {t('placeForm.photosHint', { max: MAX_IMAGES_PER_PLACE })}
           </p>
           <input
             ref={fileInputRef}

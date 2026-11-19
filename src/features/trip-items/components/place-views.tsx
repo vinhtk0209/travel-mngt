@@ -12,6 +12,7 @@ import {
 import type { ReactNode } from 'react'
 import { TagPill } from '@/components/ui/tag-pill'
 import { resolveGoogleMapsUrl } from '@/services/google-maps'
+import { useI18n } from '@/i18n/i18n-context'
 import { cn } from '@/utils/cn'
 import type { TripItemWithMeta } from '../api'
 
@@ -38,12 +39,14 @@ function CompletionToggle({
   isBusy?: boolean
   onToggle: () => void
 }) {
+  const { t } = useI18n()
+
   return (
     <button
       type="button"
       onClick={onToggle}
       disabled={disabled || isBusy}
-      aria-label={completed ? 'Mark as not done' : 'Mark as completed'}
+      aria-label={completed ? t('places.markNotDone') : t('places.markDone')}
       aria-pressed={completed}
       className={cn(
         'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition',
@@ -60,6 +63,7 @@ function CompletionToggle({
 }
 
 function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 'item' | 'canEdit' | 'onEdit' | 'onDelete'>) {
+  const { t } = useI18n()
   const mapsUrl = resolveGoogleMapsUrl(item)
 
   return (
@@ -70,8 +74,8 @@ function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 
           target="_blank"
           rel="noreferrer"
           className="rounded-full p-2 text-ink-muted transition hover:bg-mint-50 hover:text-mint-600"
-          aria-label={`Open ${item.name} in Google Maps`}
-          title="Open in Google Maps"
+          aria-label={t('places.openNameMaps', { name: item.name })}
+          title={t('places.openMaps')}
         >
           <ExternalLink className="h-4 w-4" />
         </a>
@@ -82,8 +86,8 @@ function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 
             type="button"
             onClick={onEdit}
             className="rounded-full p-2 text-ink-muted transition hover:bg-coral-50 hover:text-coral-600"
-            aria-label={`Edit ${item.name}`}
-            title="Edit place"
+            aria-label={t('places.editName', { name: item.name })}
+            title={t('places.editPlace')}
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -91,8 +95,8 @@ function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 
             type="button"
             onClick={onDelete}
             className="rounded-full p-2 text-ink-muted transition hover:bg-rose-50 hover:text-rose-500"
-            aria-label={`Delete ${item.name}`}
-            title="Delete place"
+            aria-label={t('places.deleteName', { name: item.name })}
+            title={t('places.deletePlace')}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -103,8 +107,9 @@ function PlaceActions({ item, canEdit, onEdit, onDelete }: Pick<PlaceViewProps, 
 }
 
 function PlaceLocation({ item, className }: { item: TripItemWithMeta; className?: string }) {
+  const { t } = useI18n()
   const mapsUrl = resolveGoogleMapsUrl(item)
-  const label = item.address || (mapsUrl ? 'Open in Google Maps' : 'No address yet')
+  const label = item.address || (mapsUrl ? t('places.openMaps') : t('places.noAddress'))
 
   return (
     <p className={cn('mt-0.5 flex items-start gap-1 text-xs text-ink-muted', className)}>
@@ -115,7 +120,7 @@ function PlaceLocation({ item, className }: { item: TripItemWithMeta; className?
           target="_blank"
           rel="noreferrer"
           className="line-clamp-2 underline-offset-2 transition hover:text-mint-600 hover:underline"
-          title={`Open ${item.name} in Google Maps`}
+          title={t('places.openNameMaps', { name: item.name })}
         >
           {label}
         </a>
@@ -148,6 +153,7 @@ export function PlaceListRow({
   onDelete,
   onOpenGallery,
 }: PlaceViewProps) {
+  const { t } = useI18n()
   const completed = item.status === 'completed'
   const firstImage = item.images[0]
   const imageUrl = firstImage ? imageUrls[firstImage.storage_path] : undefined
@@ -178,16 +184,16 @@ export function PlaceListRow({
         className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl cover-fallback sm:h-20 sm:w-20"
         aria-label={
           item.images.length > 0
-            ? `Preview photos of ${item.name}`
+            ? t('places.previewPhotos', { name: item.name })
             : mapsUrl
-              ? `Open ${item.name} in Google Maps`
+              ? t('places.openNameMaps', { name: item.name })
               : undefined
         }
         title={
           item.images.length > 0
-            ? `Preview photos of ${item.name}`
+            ? t('places.previewPhotos', { name: item.name })
             : mapsUrl
-              ? `Open ${item.name} in Google Maps`
+              ? t('places.openNameMaps', { name: item.name })
               : undefined
         }
       >
@@ -236,7 +242,7 @@ export function PlaceListRow({
               completed ? 'bg-mint-100 text-mint-600' : 'bg-coral-100 text-coral-600',
             )}
           >
-            {completed ? 'Completed' : 'To do'}
+            {completed ? t('places.completedStatus') : t('places.todoStatus')}
           </span>
           <PlaceActions item={item} canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} />
         </div>
@@ -248,7 +254,7 @@ export function PlaceListRow({
           completed ? 'bg-mint-100 text-mint-600' : 'bg-coral-100 text-coral-600',
         )}
       >
-        {completed ? 'Done' : 'To do'}
+        {completed ? t('places.done') : t('places.todoStatus')}
       </span>
     </div>
   )
@@ -265,6 +271,7 @@ export function PlaceCard({
   onDelete,
   onOpenGallery,
 }: PlaceViewProps) {
+  const { t } = useI18n()
   const completed = item.status === 'completed'
   const firstImage = item.images[0]
   const imageUrl = firstImage ? imageUrls[firstImage.storage_path] : undefined
@@ -288,16 +295,16 @@ export function PlaceCard({
           className="h-full w-full"
           aria-label={
             item.images.length > 0
-              ? `Preview photos of ${item.name}`
+              ? t('places.previewPhotos', { name: item.name })
               : mapsUrl
-                ? `Open ${item.name} in Google Maps`
+                ? t('places.openNameMaps', { name: item.name })
                 : undefined
           }
           title={
             item.images.length > 0
-              ? `Preview photos of ${item.name}`
+              ? t('places.previewPhotos', { name: item.name })
               : mapsUrl
-                ? `Open ${item.name} in Google Maps`
+                ? t('places.openNameMaps', { name: item.name })
                 : undefined
           }
         >
@@ -324,11 +331,11 @@ export function PlaceCard({
         </div>
         {item.images.length > 1 ? (
           <span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2 py-0.5 text-[10px] font-bold text-white">
-            {item.images.length} photos
+            {t('places.photosCount', { count: item.images.length })}
           </span>
         ) : mapsUrl && item.images.length === 0 ? (
           <span className="absolute bottom-2 left-2 rounded-full bg-ink/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
-            Open in Maps
+            {t('places.openInMaps')}
           </span>
         ) : null}
       </div>
@@ -359,7 +366,7 @@ export function PlaceCard({
               completed ? 'bg-mint-100 text-mint-600' : 'bg-coral-100 text-coral-600',
             )}
           >
-            {completed ? 'Completed' : 'To do'}
+            {completed ? t('places.completedStatus') : t('places.todoStatus')}
           </span>
           <PlaceActions item={item} canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} />
         </div>
@@ -379,6 +386,8 @@ export function DragHandle({
   listeners: DraggableSyntheticListeners
   className?: string
 }) {
+  const { t } = useI18n()
+
   return (
     <button
       type="button"
@@ -389,8 +398,8 @@ export function DragHandle({
         'cursor-grab touch-none rounded-full p-1.5 text-ink-muted transition hover:bg-cream hover:text-ink active:cursor-grabbing',
         className,
       )}
-      aria-label="Drag to reorder"
-      title="Drag to reorder"
+      aria-label={t('places.drag')}
+      title={t('places.drag')}
     >
       <GripVertical className="h-4 w-4" />
     </button>

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { queryKeys } from '@/lib/query-keys'
 import { useAuth } from '@/features/auth/auth-context'
+import { translate } from '@/i18n/translate'
 import {
   deleteAvatarObject,
   getSignedAvatarUrls,
@@ -53,7 +54,7 @@ export function useUploadAvatar() {
 
   return useMutation({
     mutationFn: async (input: { file: File; previousPath?: string | null }) => {
-      if (!user) throw new Error('You must be signed in')
+      if (!user) throw new Error(translate('errors.authRequired'))
       const path = await uploadAvatar(user.id, input.file)
       if (input.previousPath && input.previousPath !== path) {
         void deleteAvatarObject(input.previousPath)
@@ -70,7 +71,7 @@ export function useRemoveAvatar() {
 
   return useMutation({
     mutationFn: (path: string | null | undefined) => {
-      if (!user) throw new Error('You must be signed in')
+      if (!user) throw new Error(translate('errors.authRequired'))
       return removeAvatar(user.id, path)
     },
     onSuccess: () => invalidate(),

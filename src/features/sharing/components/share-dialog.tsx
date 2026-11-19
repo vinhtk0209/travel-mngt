@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { useTrip } from '@/features/trips/hooks'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import {
   useCreateTripShare,
   useDisableTripShare,
@@ -22,12 +23,13 @@ type ShareDialogProps = {
   tripName: string
 }
 
-const ROLE_COPY: Record<ShareRole, string> = {
-  editor: 'can add places, photos and vote on the plan',
-  viewer: 'can browse the plan and photos, but cannot change them',
+const ROLE_KEYS: Record<ShareRole, 'role.editorCopy' | 'role.viewerCopy'> = {
+  editor: 'role.editorCopy',
+  viewer: 'role.viewerCopy',
 }
 
 export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProps) {
+  const { t } = useI18n()
   const tripQuery = useTrip(tripId)
   const trip = tripQuery.data
   const createShare = useCreateTripShare(tripId)
@@ -71,7 +73,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
         setRole(share.role)
       },
       onError: (mutationError) => {
-        setError(getErrorMessage(mutationError, 'Could not create the share link'))
+        setError(getErrorMessage(mutationError, t('sharing.createError')))
       },
     })
   }
@@ -86,7 +88,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
     setRoleMutation.mutate(nextRole, {
       onError: (mutationError) => {
         setRole(previous)
-        setError(getErrorMessage(mutationError, 'Could not update the share role'))
+        setError(getErrorMessage(mutationError, t('sharing.roleError')))
       },
     })
   }
@@ -100,7 +102,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
       copyTimer.current = window.setTimeout(() => setCopied(false), 2_000)
     } catch {
       linkInput.current?.select()
-      setError('Could not copy automatically. Select the link and copy it manually.')
+      setError(t('sharing.copyError'))
     }
   }
 
@@ -113,7 +115,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
         setCopied(false)
       },
       onError: (mutationError) => {
-        setError(getErrorMessage(mutationError, 'Could not create a new link'))
+        setError(getErrorMessage(mutationError, t('sharing.newLinkError')))
         setConfirmRegenerate(false)
       },
     })
@@ -128,7 +130,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
         setCopied(false)
       },
       onError: (mutationError) => {
-        setError(getErrorMessage(mutationError, 'Could not stop sharing'))
+        setError(getErrorMessage(mutationError, t('sharing.stopError')))
         setConfirmDisable(false)
       },
     })
@@ -145,16 +147,16 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
       <Modal
         open={open}
         onClose={onClose}
-        title="Share this trip"
-        description={`Invite people to ${tripName} with a link. No email addresses needed.`}
+        title={t('sharing.title')}
+        description={t('sharing.description', { name: tripName })}
         size="md"
         footer={
           <div className="flex w-full items-center justify-between gap-3">
             <p className="text-[11px] font-semibold text-ink-muted">
-              Only the owner can manage the link.
+              {t('sharing.ownerOnly')}
             </p>
             <Button variant="secondary" onClick={onClose}>
-              Done
+              {t('sharing.done')}
             </Button>
           </div>
         }
@@ -175,7 +177,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
               htmlFor="share-role"
               className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-ink-muted"
             >
-              <Users className="h-3.5 w-3.5" /> People who join get
+              <Users className="h-3.5 w-3.5" /> {t('sharing.roleLabel')}
             </label>
             <Select
               id="share-role"
@@ -184,19 +186,21 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
               onChange={(event) => handleRoleChange(event.target.value as ShareRole)}
               className="mt-2"
             >
-              <option value="editor">Editor — can edit the trip</option>
-              <option value="viewer">Viewer — can only look</option>
+              <option value="editor">{t('role.editorOption')}</option>
+              <option value="viewer">{t('role.viewerOption')}</option>
             </Select>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-              An <strong>editor</strong> {ROLE_COPY.editor}. A <strong>viewer</strong>{' '}
-              {ROLE_COPY.viewer}.
+              {t('sharing.roleHelp', {
+                editorCopy: t(ROLE_KEYS.editor),
+                viewerCopy: t(ROLE_KEYS.viewer),
+              })}
             </p>
           </div>
 
           {token && link ? (
             <div className="space-y-2">
               <label htmlFor="share-link" className="text-xs font-extrabold uppercase tracking-wide text-ink-muted">
-                Share link
+                {t('sharing.linkLabel')}
               </label>
               <div className="flex gap-2">
                 <Input
@@ -214,12 +218,13 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
                     copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />
                   }
                 >
-                  {copied ? 'Copied' : 'Copy'}
+                  {copied ? t('sharing.copied') : t('sharing.copy')}
                 </Button>
               </div>
               <p className="text-[11px] leading-relaxed text-ink-muted">
-                Anyone with this link can join as {role === 'editor' ? 'an editor' : 'a viewer'}.
-                Rotate or stop sharing if it spreads further than you planned.
+                {t('sharing.linkHelp', {
+                  role: role === 'editor' ? t('sharing.anEditor') : t('sharing.aViewer'),
+                })}
               </p>
 
               <div className="flex flex-wrap gap-2 pt-1">
@@ -230,7 +235,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
                   disabled={busy}
                   leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
                 >
-                  New link
+                  {t('sharing.newLink')}
                 </Button>
                 <Button
                   size="sm"
@@ -240,7 +245,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
                   disabled={busy}
                   leftIcon={<ShieldOff className="h-3.5 w-3.5" />}
                 >
-                  Stop sharing
+                  {t('sharing.stop')}
                 </Button>
               </div>
             </div>
@@ -249,10 +254,9 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
               <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-coral-100 text-coral-500">
                 <Link2 className="h-5 w-5" />
               </span>
-              <p className="mt-3 text-sm font-extrabold text-ink">Link sharing is off</p>
+              <p className="mt-3 text-sm font-extrabold text-ink">{t('sharing.offTitle')}</p>
               <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-ink-muted">
-                Create one link for your group chat. You can change the role, rotate the link or
-                turn it off at any time.
+                {t('sharing.offBody')}
               </p>
               <Button
                 className="mt-4"
@@ -260,7 +264,7 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
                 isLoading={createShare.isPending}
                 leftIcon={<Link2 className="h-4 w-4" />}
               >
-                Create share link
+                {t('sharing.create')}
               </Button>
             </div>
           )}
@@ -272,9 +276,9 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
         onClose={() => setConfirmRegenerate(false)}
         onConfirm={handleRegenerate}
         isLoading={regenerateShare.isPending}
-        title="Create a new link?"
-        confirmLabel="Create new link"
-        description="The current link stops working immediately. People who already joined keep their access."
+        title={t('sharing.regenerateTitle')}
+        confirmLabel={t('sharing.regenerateButton')}
+        description={t('sharing.regenerateBody')}
       />
 
       <ConfirmDialog
@@ -283,9 +287,9 @@ export function ShareDialog({ open, onClose, tripId, tripName }: ShareDialogProp
         onConfirm={handleDisable}
         isLoading={disableShare.isPending}
         tone="danger"
-        title="Stop link sharing?"
-        confirmLabel="Stop sharing"
-        description="The link stops working immediately. Existing members keep their access."
+        title={t('sharing.stopTitle')}
+        confirmLabel={t('sharing.stop')}
+        description={t('sharing.stopBody')}
       />
     </>
   )

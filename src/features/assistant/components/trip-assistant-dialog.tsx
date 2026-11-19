@@ -6,13 +6,11 @@ import { Modal } from '@/components/ui/modal'
 import type { AssistantMode } from '@/lib/supabase/database.types'
 import { cn } from '@/utils/cn'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
+import type { TranslationKey } from '@/i18n/translate'
 import { basicTravelReply } from '../basic-replies'
 import { useAskTripAssistant, useAssistantPreference, useSetAssistantPreference } from '../hooks'
-import {
-  SUGGESTION_PROMPTS,
-  type TripBudget,
-  type TripIdea,
-} from '../suggestions'
+import type { TripBudget, TripIdea } from '../suggestions'
 import type { AssistantTurn } from '../api'
 
 type ChatMessage = {
@@ -33,20 +31,28 @@ type TripAssistantDialogProps = {
   defaultMode?: AssistantMode
 }
 
-const BUDGET_LABELS: Record<TripBudget, string> = {
-  budget: 'Budget-friendly',
-  mid: 'Mid-range',
-  comfort: 'Comfort',
+const BUDGET_KEYS: Record<TripBudget, TranslationKey> = {
+  budget: 'assistant.budgetBudget',
+  mid: 'assistant.budgetMid',
+  comfort: 'assistant.budgetComfort',
 }
 
-function greetingMessage(mode: AssistantMode, hasTrip: boolean): ChatMessage {
+const SUGGESTION_KEYS: TranslationKey[] = [
+  'assistant.suggest1',
+  'assistant.suggest2',
+  'assistant.suggest3',
+  'assistant.suggest4',
+  'assistant.suggest5',
+]
+
+type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string
+
+function greetingMessage(mode: AssistantMode, hasTrip: boolean, t: Translate): ChatMessage {
   if (mode === 'gemini') {
     return {
       id: 'greeting',
       role: 'bot',
-      text: hasTrip
-        ? "Hi, I'm Wanderbot with Gemini AI. I can see this trip's name, destination and dates, so ask me anything about pacing, food, neighbourhoods or what to book next."
-        : 'Hi, I\'m Wanderbot with Gemini AI. Ask me anything about planning a trip.',
+      text: hasTrip ? t('assistant.greetingGeminiTrip') : t('assistant.greetingGemini'),
       ideas: [],
     }
   }
@@ -54,13 +60,10 @@ function greetingMessage(mode: AssistantMode, hasTrip: boolean): ChatMessage {
   return {
     id: 'greeting',
     role: 'bot',
-    text: hasTrip
-      ? "Hi, I'm Wanderbot in Basic mode. I answer from a small set of travel playbooks — packing, budgets, timing, food, transport, safety and simple itineraries. For free-form planning, switch me to Gemini AI."
-      : "Hi, I'm Wanderbot in Basic mode. Tell me a vibe, a budget or how many days you have, and I'll suggest a trip worth stealing.",
+    text: hasTrip ? t('assistant.greetingBasicTrip') : t('assistant.greetingBasic'),
     ideas: [],
   }
 }
-
 export function TripAssistantDialog({
   open,
   onClose,
@@ -70,6 +73,7 @@ export function TripAssistantDialog({
   tripDestination,
   defaultMode = 'basic',
 }: TripAssistantDialogProps) {
+  const { t } = useI18n()
   const preferenceQuery = useAssistantPreference(tripId)
   const setPreference = useSetAssistantPreference(tripId)
   const askAssistant = useAskTripAssistant(tripId)
@@ -77,7 +81,7 @@ export function TripAssistantDialog({
   const hasTrip = Boolean(tripId)
   const [mode, setMode] = useState<AssistantMode>(defaultMode)
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    greetingMessage(defaultMode, hasTrip),
+    greetingMessage(defaultMode, hasTrip, t),
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
@@ -110,7 +114,7 @@ export function TripAssistantDialog({
 
     appliedPreference.current = nextMode
     setMode(nextMode)
-    setMessages([greetingMessage(nextMode, hasTrip)])
+    setMessages([greetingMessage(nextMode, hasTrip, t)])
     setInput('')
     setThinking(false)
     setError(null)
@@ -141,12 +145,12 @@ export function TripAssistantDialog({
     userInteracted.current = true
     setMode(nextMode)
     setError(null)
-    setMessages([greetingMessage(nextMode, hasTrip)])
+    setMessages([greetingMessage(nextMode, hasTrip, t)])
     setInput('')
     if (tripId) {
       setPreference.mutate(nextMode, {
         onError: (mutationError) => {
-          setError(getErrorMessage(mutationError, 'Could not save your assistant preference'))
+          setError(getErrorMessage(mutationError, t('assistant.preferenceError')))
         },
       })
     }
@@ -187,14 +191,11 @@ export function TripAssistantDialog({
       const answer = await askAssistant.mutateAsync(turns)
       appendReply({ role: 'bot', text: answer.text })
     } catch (requestError) {
-      const message = getErrorMessage(
-        requestError,
-        'The AI assistant could not answer. Try again or switch to Basic mode.',
-      )
+      const message = getErrorMessage(requestError, t('assistant.errorBody'))
       setError(message)
       appendReply({
         role: 'bot',
-        text: `${message}\n\nYou can keep chatting in Basic mode without an API key.`,
+        text: `${message}\n\n${t('assistant.errorSuffix')}`,
         error: true,
       })
     }
@@ -205,7 +206,7 @@ export function TripAssistantDialog({
     if (!text || busy) return
     userInteracted.current = true
     if (mode === 'gemini' && !tripId) {
-      setError('Gemini AI is available inside a trip. Open a trip and try again.')
+      setError(t('assistant.geminiNeedsTrip'))
       return
     }
 
@@ -224,18 +225,14 @@ export function TripAssistantDialog({
     }
   }
 
-  const modeLabel = mode === 'gemini' ? 'Gemini AI' : 'Basic'
+  const modeLabel = mode === 'gemini' ? t('assistant.gemini') : t('assistant.basic')
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Wanderbot trip ideas"
-      description={
-        hasTrip
-          ? 'A shared travel assistant. Basic mode works offline; Gemini AI adds free-form answers.'
-          : 'A tiny offline assistant with a soft spot for good itineraries.'
-      }
+      title={t('assistant.title')}
+      description={hasTrip ? t('assistant.descriptionTrip') : t('assistant.descriptionGlobal')}
       size="md"
       footer={
         <form
@@ -254,17 +251,17 @@ export function TripAssistantDialog({
             }}
             placeholder={
               mode === 'gemini'
-                ? 'Ask about food, pacing, neighbourhoods…'
-                : 'Ask about packing, budget, timing…'
+                ? t('assistant.placeholderGemini')
+                : t('assistant.placeholderBasic')
             }
-            aria-label="Message Wanderbot"
+            aria-label={t('assistant.messageLabel')}
             disabled={busy}
           />
           <Button
             type="submit"
             size="icon"
             disabled={busy || input.trim().length === 0}
-            aria-label="Send message"
+            aria-label={t('assistant.send')}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -274,30 +271,30 @@ export function TripAssistantDialog({
       <div className="space-y-3">
         {hasTrip ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/70 bg-cream/60 p-2">
-            <div className="flex items-center gap-1.5" role="group" aria-label="Assistant mode">
+            <div className="flex items-center gap-1.5" role="group" aria-label={t('assistant.modeGroup')}>
               <ModeButton
                 active={mode === 'basic'}
                 onClick={() => handleModeChange('basic')}
                 icon={<Bot className="h-3.5 w-3.5" />}
-                label="Basic"
+                label={t('assistant.basic')}
                 disabled={busy || setPreference.isPending}
               />
               <ModeButton
                 active={mode === 'gemini'}
                 onClick={() => handleModeChange('gemini')}
                 icon={<Sparkles className="h-3.5 w-3.5" />}
-                label="Gemini AI"
+                label={t('assistant.gemini')}
                 disabled={busy || setPreference.isPending}
               />
             </div>
             <span className="px-1 text-[11px] font-semibold text-ink-muted">
-              {mode === 'gemini' ? 'Free-form AI answers' : 'Curated tips, no API key'}
-              {preferenceQuery.data ? ' · your choice' : ' · trip default'}
+              {mode === 'gemini' ? t('assistant.freeForm') : t('assistant.curated')}
+              {preferenceQuery.data ? t('assistant.yourChoice') : t('assistant.tripDefault')}
             </span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 rounded-2xl border border-border/70 bg-cream/60 px-3 py-2 text-[11px] font-bold text-ink-muted">
-            <Bot className="h-3.5 w-3.5" /> Basic mode · curated responses
+            <Bot className="h-3.5 w-3.5" /> {t('assistant.basicOnly')}
           </div>
         )}
 
@@ -351,7 +348,7 @@ export function TripAssistantDialog({
                               onClick={() => onPlanTrip(idea)}
                               leftIcon={<Sparkles className="h-3.5 w-3.5" />}
                             >
-                              Plan
+                              {t('assistant.plan')}
                             </Button>
                           ) : null}
                         </div>
@@ -362,10 +359,10 @@ export function TripAssistantDialog({
 
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <span className="rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold text-ink-muted">
-                            {idea.durationDays} days
+                            {t('assistant.days', { count: idea.durationDays })}
                           </span>
                           <span className="rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold text-ink-muted">
-                            {BUDGET_LABELS[idea.budget]}
+                            {t(BUDGET_KEYS[idea.budget])}
                           </span>
                         </div>
 
@@ -389,7 +386,7 @@ export function TripAssistantDialog({
             <div className="flex justify-start">
               <div className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-white/70 px-3.5 py-2.5 text-sm text-ink-muted">
                 <Wand2 className="h-4 w-4 animate-pulse" />
-                {mode === 'gemini' ? 'Asking Gemini…' : 'Thinking of somewhere good…'}
+                {mode === 'gemini' ? t('assistant.thinkingGemini') : t('assistant.thinkingBasic')}
               </div>
             </div>
           ) : null}
@@ -400,20 +397,23 @@ export function TripAssistantDialog({
             {modeLabel}
           </span>
           {mode === 'basic' ? (
-            SUGGESTION_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => sendMessage(prompt)}
-                disabled={busy}
-                className="rounded-full border border-border bg-white/70 px-2.5 py-1 text-[11px] font-bold text-ink-soft transition hover:border-coral-200 hover:bg-coral-50 hover:text-coral-700 disabled:opacity-60"
-              >
-                {prompt}
-              </button>
-            ))
+            SUGGESTION_KEYS.map((promptKey) => {
+              const prompt = t(promptKey)
+              return (
+                <button
+                  key={promptKey}
+                  type="button"
+                  onClick={() => sendMessage(prompt)}
+                  disabled={busy}
+                  className="rounded-full border border-border bg-white/70 px-2.5 py-1 text-[11px] font-bold text-ink-soft transition hover:border-coral-200 hover:bg-coral-50 hover:text-coral-700 disabled:opacity-60"
+                >
+                  {prompt}
+                </button>
+              )
+            })
           ) : (
             <span className="text-[11px] font-semibold text-ink-muted">
-              Gemini answers are generated by Google and may be inaccurate.
+              {t('assistant.disclaimer')}
             </span>
           )}
         </div>

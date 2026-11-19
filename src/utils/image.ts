@@ -1,3 +1,5 @@
+import { translate } from '@/i18n/translate'
+
 const MAX_DIMENSION = 1920
 const SKIP_BELOW_BYTES = 300 * 1024
 const QUALITY = 0.82
@@ -35,16 +37,19 @@ export function normalizeImageFile(file: File): File {
 export function validateImageFile(file: File): string | null {
   const type = detectImageType(file)
   if (type === 'image/heic' || type === 'image/heif' || /\.hei[cf]$/i.test(file.name)) {
-    return 'HEIC photos are not supported. Export it as JPG or PNG first.'
+    return translate('validation.image.heic')
   }
   if (!SUPPORTED_TYPES.has(type)) {
-    return 'Use a JPG, PNG, WEBP or GIF image.'
+    return translate('validation.image.type')
   }
   if (file.size === 0) {
-    return 'This file is empty.'
+    return translate('validation.image.empty')
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return `Photos must be under ${formatFileSize(MAX_IMAGE_BYTES)} — this one is ${formatFileSize(file.size)}.`
+    return translate('validation.image.tooLarge', {
+      max: formatFileSize(MAX_IMAGE_BYTES),
+      size: formatFileSize(file.size),
+    })
   }
   return null
 }
@@ -59,7 +64,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
     }
     image.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(new Error('Could not read this image'))
+      reject(new Error(translate('validation.image.readError')))
     }
     image.src = url
   })

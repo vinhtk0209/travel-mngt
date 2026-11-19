@@ -161,6 +161,18 @@ export async function getProfileAvatar(userId: string): Promise<string | null> {
   return row?.avatar_url ?? null
 }
 
+export async function getProfileLocale(userId: string): Promise<string | null> {
+  const { data, error } = await admin()
+    .from('profiles')
+    .select('locale')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) throw new Error(`Could not read profile locale: ${error.message}`)
+  const row = data as { locale: string | null } | null
+  return row?.locale ?? null
+}
+
 export async function getTripMemberRole(tripId: string, userId: string): Promise<string | null> {
   const { data, error } = await admin()
     .from('trip_members')

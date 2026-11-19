@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase/client'
 import type { Provider } from '@supabase/supabase-js'
 import type { Tables } from '@/lib/supabase/database.types'
+import type { Locale } from '@/lib/supabase/database.types'
 
 export type Profile = Tables<'profiles'>
 
@@ -31,7 +32,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 
 export async function updateProfile(
   userId: string,
-  input: { display_name: string },
+  input: { display_name?: string; locale?: Locale },
 ): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')

@@ -2,8 +2,10 @@ import { Compass } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/shared/logo'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/i18n-context'
 
 export function NotFoundPage() {
+  const { t } = useI18n()
   const navigate = useNavigate()
 
   return (
@@ -13,16 +15,14 @@ export function NotFoundPage() {
         <Compass className="h-10 w-10" />
       </span>
       <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-coral-500">404</p>
-      <h1 className="mt-2 font-display text-3xl font-extrabold">This path is off the map</h1>
-      <p className="mt-2 max-w-sm text-sm text-ink-soft">
-        The page you were looking for does not exist. Let us get you back to planning.
-      </p>
+      <h1 className="mt-2 font-display text-3xl font-extrabold">{t('notFound.title')}</h1>
+      <p className="mt-2 max-w-sm text-sm text-ink-soft">{t('notFound.body')}</p>
       <Button
         className="mt-6"
         leftIcon={<Compass className="h-4 w-4" />}
         onClick={() => navigate('/dashboard')}
       >
-        Back to my trips
+        {t('notFound.action')}
       </Button>
     </div>
   )

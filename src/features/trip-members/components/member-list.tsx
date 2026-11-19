@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { TripRole } from '@/lib/supabase/database.types'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { useRemoveMember, useTransferOwnership, useUpdateMemberRole } from '../hooks'
 import type { TripMemberWithProfile } from '../types'
 
@@ -41,6 +42,7 @@ export function MemberList({
   isOwner,
   isLoading = false,
 }: MemberListProps) {
+  const { t } = useI18n()
   const updateRole = useUpdateMemberRole(tripId)
   const removeMember = useRemoveMember(tripId)
   const transferOwnership = useTransferOwnership(tripId)
@@ -54,9 +56,9 @@ export function MemberList({
     setBusyMemberId(member.id)
     try {
       await updateRole.mutateAsync({ memberId: member.id, role })
-      toast.success('Member role updated')
+      toast.success(t('members.roleUpdated'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not update the member'))
+      toast.error(getErrorMessage(error, t('members.roleError')))
     } finally {
       setBusyMemberId(null)
     }
@@ -66,10 +68,10 @@ export function MemberList({
     if (!removing) return
     try {
       await removeMember.mutateAsync(removing.id)
-      toast.success('Member removed')
+      toast.success(t('members.removed'))
       setRemoving(null)
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not remove the member'))
+      toast.error(getErrorMessage(error, t('members.removeError')))
     }
   }
 
@@ -77,10 +79,10 @@ export function MemberList({
     if (!transferring) return
     try {
       await transferOwnership.mutateAsync(transferring.user_id)
-      toast.success('Ownership transferred')
+      toast.success(t('members.transferred'))
       setTransferring(null)
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not transfer ownership'))
+      toast.error(getErrorMessage(error, t('members.transferError')))
     }
   }
 
@@ -104,7 +106,7 @@ export function MemberList({
     <>
       <ul className="space-y-2">
         {members.map((member) => {
-          const name = member.profile?.display_name ?? 'Traveler'
+          const name = member.profile?.display_name ?? t('common.traveler')
           const isSelf = member.user_id === currentUserId
           const Icon = roleIcon[member.role]
           const isBusy = busyMemberId === member.id
@@ -121,12 +123,12 @@ export function MemberList({
                     {name}
                     {isSelf ? (
                       <span className="rounded-full bg-cream px-1.5 py-0.5 text-[10px] font-bold text-ink-muted">
-                        You
+                        {t('common.you')}
                       </span>
                     ) : null}
                   </p>
                   <p className="truncate text-xs text-ink-muted">
-                    {member.profile?.email ?? 'Member'}
+                    {member.profile?.email ?? t('common.member')}
                   </p>
                 </div>
               </div>
@@ -134,11 +136,11 @@ export function MemberList({
               <div className="flex items-center gap-2 sm:justify-end">
                 {member.role === 'owner' || !isOwner || isSelf ? (
                   <Badge variant={roleVariant[member.role]} icon={<Icon className="h-3 w-3" />}>
-                    {member.role}
+                    {t(`role.${member.role}`)}
                   </Badge>
                 ) : (
                   <Select
-                    aria-label={`Role for ${name}`}
+                    aria-label={t('members.roleFor', { name })}
                     value={member.role}
                     disabled={isBusy}
                     onChange={(event) =>
@@ -146,8 +148,8 @@ export function MemberList({
                     }
                     className="h-9 w-28 rounded-full px-3 text-xs font-bold"
                   >
-                    <option value="editor">Editor</option>
-                    <option value="viewer">Viewer</option>
+                    <option value="editor">{t('role.editor')}</option>
+                    <option value="viewer">{t('role.viewer')}</option>
                   </Select>
                 )}
 
@@ -156,8 +158,8 @@ export function MemberList({
                     <Button
                       variant="ghost"
                       size="icon"
-                      title="Transfer ownership"
-                      aria-label={`Make ${name} the owner`}
+                      title={t('members.transferTitle')}
+                      aria-label={t('members.makeOwner', { name })}
                       onClick={() => setTransferring(member)}
                     >
                       <ShieldCheck className="h-4 w-4" />
@@ -166,8 +168,8 @@ export function MemberList({
                       variant="ghost"
                       size="icon"
                       className="text-rose-500 hover:bg-rose-50"
-                      title="Remove member"
-                      aria-label={`Remove ${name}`}
+                      title={t('members.removeTitle')}
+                      aria-label={t('members.removeLabel', { name })}
                       onClick={() => setRemoving(member)}
                     >
                       <UserMinus className="h-4 w-4" />
@@ -185,12 +187,13 @@ export function MemberList({
         onClose={() => setRemoving(null)}
         onConfirm={() => void handleRemove()}
         isLoading={removeMember.isPending}
-        title="Remove this member?"
-        confirmLabel="Remove"
+        title={t('members.removeConfirmTitle')}
+        confirmLabel={t('profile.remove')}
         description={
           <>
-            <strong>{removing?.profile?.display_name ?? 'This member'}</strong> will lose access to
-            this trip immediately. Places they created stay in the trip.
+            {t('members.removeConfirmBody', {
+              name: removing?.profile?.display_name ?? t('common.member'),
+            })}
           </>
         }
       />
@@ -201,12 +204,13 @@ export function MemberList({
         onConfirm={() => void handleTransfer()}
         isLoading={transferOwnership.isPending}
         tone="primary"
-        title="Transfer ownership?"
-        confirmLabel="Transfer"
+        title={t('members.transferConfirmTitle')}
+        confirmLabel={t('members.transferTitle')}
         description={
           <>
-            <strong>{transferring?.profile?.display_name ?? 'This member'}</strong> becomes the new
-            owner and can manage members and delete the trip. You will become an editor.
+            {t('members.transferConfirmBody', {
+              name: transferring?.profile?.display_name ?? t('common.member'),
+            })}
           </>
         }
       />

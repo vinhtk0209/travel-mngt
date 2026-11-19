@@ -4,10 +4,12 @@ import { useSearchParams } from 'react-router-dom'
 import { AuthShell } from '@/components/shared/auth-shell'
 import { Button } from '@/components/ui/button'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { buildAuthCallbackUrl, getSafeRedirectPath } from '@/utils/redirect'
 import { signInWithOAuth } from '../api'
 
 export function LoginPage() {
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
   const redirect = getSafeRedirectPath(searchParams.get('redirect'))
   const [serverError, setServerError] = useState<string | null>(null)
@@ -20,15 +22,15 @@ export function LoginPage() {
       const redirectTo = buildAuthCallbackUrl(window.location.origin, redirect)
       await signInWithOAuth(provider, redirectTo)
     } catch (error) {
-      setServerError(getErrorMessage(error, 'Could not start social sign in.'))
+      setServerError(getErrorMessage(error, t('auth.couldNotStart')))
       setLoadingProvider(null)
     }
   }
 
   return (
     <AuthShell
-      title="Welcome to Wanderlist"
-      subtitle="Continue with a social account to plan and share trips with your crew."
+      title={t('auth.loginTitle')}
+      subtitle={t('auth.loginSubtitle')}
     >
       <div className="space-y-3">
         {serverError ? (
@@ -47,7 +49,7 @@ export function LoginPage() {
           isLoading={loadingProvider === 'google'}
           disabled={loadingProvider !== null}
         >
-          Continue with Google
+          {t('auth.continueGoogle')}
         </Button>
 
         <Button
@@ -59,7 +61,7 @@ export function LoginPage() {
           isLoading={loadingProvider === 'github'}
           disabled={loadingProvider !== null}
         >
-          Continue with GitHub
+          {t('auth.continueGitHub')}
         </Button>
       </div>
     </AuthShell>

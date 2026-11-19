@@ -1,11 +1,15 @@
 import { Compass } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useI18n } from '@/i18n/i18n-context'
+import { LanguageToggle } from './language-toggle'
 import { Logo } from './logo'
 import { ThemeToggle } from './theme-toggle'
 import { UserMenu } from './user-menu'
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { t } = useI18n()
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-white/50 bg-cream/80 backdrop-blur-xl">
@@ -24,11 +28,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }
               >
                 <Compass className="h-4 w-4" />
-                My trips
+                {t('nav.myTrips')}
               </NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-1.5">
+            <LanguageToggle />
             <ThemeToggle />
             <UserMenu />
           </div>
@@ -39,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6">
         <p className="text-center text-xs text-ink-muted">
-          Made for slow mornings, long walks and shared plans.
+          {t('nav.footer')}
         </p>
       </footer>
     </div>

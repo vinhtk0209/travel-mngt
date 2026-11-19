@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Textarea } from '@/components/ui/textarea'
 import { useSignedImageUrls } from '@/features/images/hooks'
+import { useI18n } from '@/i18n/i18n-context'
 import { getErrorMessage } from '@/utils/errors'
 import { IMAGE_ACCEPT, validateImageFile } from '@/utils/image'
 import { useCreateTrip, useUpdateTrip } from '../hooks'
@@ -23,6 +24,7 @@ type TripFormModalProps = {
 }
 
 export function TripFormModal({ open, onClose, trip, initialValues }: TripFormModalProps) {
+  const { t } = useI18n()
   const isEditing = Boolean(trip)
   const createTrip = useCreateTrip()
   const updateTrip = useUpdateTrip(trip?.id)
@@ -88,14 +90,14 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
           previousCoverPath: trip.cover_image,
           removeCover,
         })
-        toast.success('Trip updated')
+        toast.success(t('tripForm.updated'))
       } else {
         await createTrip.mutateAsync({ values, coverFile })
-        toast.success('Trip created. Time to dream a little!')
+        toast.success(t('tripForm.created'))
       }
       onClose()
     } catch (error) {
-      setServerError(getErrorMessage(error, 'Could not save this trip'))
+      setServerError(getErrorMessage(error, t('tripForm.saveError')))
     }
   })
 
@@ -105,19 +107,17 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
     <Modal
       open={open}
       onClose={onClose}
-      title={isEditing ? 'Edit trip' : 'Plan a new trip'}
+      title={isEditing ? t('tripForm.editTitle') : t('tripForm.newTitle')}
       description={
-        isEditing
-          ? 'Tweak the details and keep the excitement going.'
-          : 'Give this adventure a name, a place and a little shape.'
+        isEditing ? t('tripForm.editDescription') : t('tripForm.newDescription')
       }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={isBusy}>
-            Cancel
+            {t('tripForm.cancel')}
           </Button>
           <Button type="submit" form="trip-form" isLoading={isBusy}>
-            {isEditing ? 'Save changes' : 'Create trip'}
+            {isEditing ? t('tripForm.save') : t('tripForm.create')}
           </Button>
         </>
       }
@@ -133,7 +133,7 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
         <div className="relative overflow-hidden rounded-2xl border border-dashed border-coral-200 bg-cream/70">
           {previewUrl ? (
             <div className="relative h-40">
-              <img src={previewUrl} alt="Trip cover preview" className="h-full w-full object-cover" />
+              <img src={previewUrl} alt={t('tripForm.coverPreview')} className="h-full w-full object-cover" />
               <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-ink/50 to-transparent p-3">
                 <Button
                   type="button"
@@ -141,7 +141,7 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <ImagePlus className="h-4 w-4" /> Replace
+                  <ImagePlus className="h-4 w-4" /> {t('tripForm.replace')}
                 </Button>
                 <Button
                   type="button"
@@ -152,7 +152,7 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
                     setRemoveCover(true)
                   }}
                 >
-                  <Trash2 className="h-4 w-4" /> Remove
+                  <Trash2 className="h-4 w-4" /> {t('tripForm.remove')}
                 </Button>
               </div>
             </div>
@@ -163,8 +163,8 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
               className="flex h-32 w-full flex-col items-center justify-center gap-2 text-ink-muted transition hover:text-coral-500"
             >
               <ImagePlus className="h-7 w-7" />
-              <span className="text-sm font-bold">Add a cover image</span>
-              <span className="text-xs">JPG, PNG, WEBP or GIF · up to 10 MB</span>
+              <span className="text-sm font-bold">{t('tripForm.addCover')}</span>
+              <span className="text-xs">{t('tripForm.coverHint')}</span>
             </button>
           )}
           <input
@@ -189,24 +189,24 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
           />
         </div>
 
-        <Field label="Trip name" htmlFor="trip-name" error={errors.name?.message} required>
-          <Input id="trip-name" placeholder="Da Lat weekend escape" {...register('name')} />
+        <Field label={t('tripForm.name')} htmlFor="trip-name" error={errors.name?.message} required>
+          <Input id="trip-name" placeholder={t('tripForm.namePlaceholder')} {...register('name')} />
         </Field>
 
-        <Field label="Destination" htmlFor="trip-destination" error={errors.destination?.message}>
+        <Field label={t('tripForm.destination')} htmlFor="trip-destination" error={errors.destination?.message}>
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
             <Input
               id="trip-destination"
               className="pl-10"
-              placeholder="Da Lat, Vietnam"
+              placeholder={t('tripForm.destinationPlaceholder')}
               {...register('destination')}
             />
           </div>
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Start date" htmlFor="trip-start" error={errors.startDate?.message}>
+          <Field label={t('tripForm.startDate')} htmlFor="trip-start" error={errors.startDate?.message}>
             <div className="relative">
               <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
               <Input
@@ -217,7 +217,7 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
               />
             </div>
           </Field>
-          <Field label="End date" htmlFor="trip-end" error={errors.endDate?.message}>
+          <Field label={t('tripForm.endDate')} htmlFor="trip-end" error={errors.endDate?.message}>
             <div className="relative">
               <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-coral-400" />
               <Input id="trip-end" type="date" className="pl-10" {...register('endDate')} />
@@ -226,14 +226,14 @@ export function TripFormModal({ open, onClose, trip, initialValues }: TripFormMo
         </div>
 
         <Field
-          label="Description"
+          label={t('tripForm.description')}
           htmlFor="trip-description"
           error={errors.description?.message}
-          hint="A little note about the vibe, the crew or the plan."
+          hint={t('tripForm.descriptionHint')}
         >
           <Textarea
             id="trip-description"
-            placeholder="Coffee, waterfalls, night markets and no alarms…"
+            placeholder={t('tripForm.descriptionPlaceholder')}
             {...register('description')}
           />
         </Field>

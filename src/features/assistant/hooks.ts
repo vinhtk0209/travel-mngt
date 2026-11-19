@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AssistantMode } from '@/lib/supabase/database.types'
 import { queryKeys } from '@/lib/query-keys'
 import { useAuth } from '@/features/auth/auth-context'
+import { translate } from '@/i18n/translate'
 import {
   askTripAssistant,
   fetchAssistantPreference,
@@ -26,7 +27,7 @@ export function useSetAssistantPreference(tripId: string | undefined) {
 
   return useMutation({
     mutationFn: (mode: AssistantMode) => {
-      if (!tripId || !user) throw new Error('You must be signed in')
+      if (!tripId || !user) throw new Error(translate('errors.authRequired'))
       return saveAssistantPreference(tripId, user.id, mode)
     },
     onSuccess: () => {
@@ -42,7 +43,7 @@ export function useSetTripAssistantMode(tripId: string | undefined) {
 
   return useMutation({
     mutationFn: (mode: AssistantMode) => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('trips.errors.tripMissing'))
       return updateTripAssistantMode(tripId, mode)
     },
     onSuccess: () => {
@@ -55,7 +56,7 @@ export function useSetTripAssistantMode(tripId: string | undefined) {
 export function useAskTripAssistant(tripId: string | undefined) {
   return useMutation({
     mutationFn: (turns: AssistantTurn[]) => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('trips.errors.tripMissing'))
       return askTripAssistant({ tripId, turns })
     },
   })

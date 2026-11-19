@@ -1,26 +1,29 @@
 import { z } from 'zod'
+import { translate } from '@/i18n/translate'
 
 const optionalDate = z
   .string()
   .optional()
-  .refine((value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value), 'Choose a valid date')
+  .refine((value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value), {
+    error: () => translate('validation.trip.dateInvalid'),
+  })
 
 export const tripFormSchema = z
   .object({
     name: z
       .string()
       .trim()
-      .min(2, 'Give your trip a name')
-      .max(80, 'Keep the name under 80 characters'),
+      .min(2, { error: () => translate('validation.trip.nameMin') })
+      .max(80, { error: () => translate('validation.trip.nameMax') }),
     destination: z
       .string()
       .trim()
-      .max(120, 'Keep the destination under 120 characters')
+      .max(120, { error: () => translate('validation.trip.destinationMax') })
       .optional(),
     description: z
       .string()
       .trim()
-      .max(2000, 'Keep the description under 2000 characters')
+      .max(2000, { error: () => translate('validation.trip.descriptionMax') })
       .optional(),
     startDate: optionalDate,
     endDate: optionalDate,
@@ -30,7 +33,10 @@ export const tripFormSchema = z
       if (!values.startDate || !values.endDate) return true
       return values.endDate >= values.startDate
     },
-    { message: 'End date must be after the start date', path: ['endDate'] },
+    {
+      error: () => translate('validation.trip.endAfterStart'),
+      path: ['endDate'],
+    },
   )
 
 export type TripFormValues = z.infer<typeof tripFormSchema>

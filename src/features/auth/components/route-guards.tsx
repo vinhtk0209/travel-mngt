@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { FullPageSpinner } from '@/components/ui/spinner'
 import { getSafeRedirectPath } from '@/utils/redirect'
+import { translate } from '@/i18n/translate'
 import { useAuth } from '../auth-context'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -9,7 +10,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   if (isLoading) {
-    return <FullPageSpinner label="Opening Wanderlist…" />
+    return <FullPageSpinner label={translate('spinner.opening')} />
   }
 
   if (!session) {
@@ -25,7 +26,7 @@ export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   if (isLoading) {
-    return <FullPageSpinner label="Just a moment…" />
+    return <FullPageSpinner label={translate('spinner.moment')} />
   }
 
   if (session) {

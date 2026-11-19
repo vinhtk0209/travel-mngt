@@ -1,3 +1,5 @@
+import { translate } from '@/i18n/translate'
+
 type ErrorWithMessage = {
   message?: unknown
   details?: unknown
@@ -7,7 +9,7 @@ type ErrorWithMessage = {
 
 export function getErrorMessage(
   error: unknown,
-  fallback = 'Something went wrong. Please try again.',
+  fallback = translate('errors.generic'),
 ): string {
   if (!error) return fallback
 

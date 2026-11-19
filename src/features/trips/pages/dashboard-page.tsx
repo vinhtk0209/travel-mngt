@@ -10,6 +10,7 @@ import { TripCardSkeleton } from '@/components/ui/skeleton'
 import { TripAssistantDialog } from '@/features/assistant/components/trip-assistant-dialog'
 import type { TripIdea } from '@/features/assistant/suggestions'
 import { useProfile } from '@/features/auth/hooks'
+import { useI18n } from '@/i18n/i18n-context'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { TripCard } from '../components/trip-card'
 import { TripFormModal } from '../components/trip-form-modal'
@@ -17,6 +18,7 @@ import { useDashboardTrips } from '../hooks'
 import type { TripFormValues } from '../schemas'
 
 export function DashboardPage() {
+  const { t } = useI18n()
   const { displayName } = useProfile()
   const tripsQuery = useDashboardTrips()
   const [createOpen, setCreateOpen] = useState(false)
@@ -60,13 +62,9 @@ export function DashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Ready when you are"
-        title={
-          <>
-            Hi {firstName}, where to next?
-          </>
-        }
-        description="Keep every trip, tiny idea and shared plan in one happy place."
+        eyebrow={t('dashboard.eyebrow')}
+        title={<>{t('dashboard.greeting', { name: firstName })}</>}
+        description={t('dashboard.description')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -74,10 +72,10 @@ export function DashboardPage() {
               onClick={() => setAssistantOpen(true)}
               leftIcon={<Sparkles className="h-4 w-4" />}
             >
-              Trip ideas
+              {t('dashboard.tripIdeas')}
             </Button>
             <Button onClick={() => setCreateOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
-              Plan a trip
+              {t('dashboard.planTrip')}
             </Button>
           </div>
         }
@@ -90,13 +88,15 @@ export function DashboardPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Find a trip…"
+              placeholder={t('dashboard.searchPlaceholder')}
               className="pl-10"
-              aria-label="Search trips"
+              aria-label={t('dashboard.searchLabel')}
             />
           </div>
           <p className="text-sm font-semibold text-ink-muted">
-            {data.length} {data.length === 1 ? 'trip' : 'trips'} in your orbit
+            {data.length === 1
+              ? t('dashboard.orbitOne', { count: data.length })
+              : t('dashboard.orbitMany', { count: data.length })}
           </p>
         </div>
       ) : null}
@@ -110,8 +110,8 @@ export function DashboardPage() {
       ) : tripsQuery.isError ? (
         <div className="mt-6">
           <ErrorState
-            title="Could not load your trips"
-            message="Check your connection and try again. Your adventures are safe."
+            title={t('dashboard.loadErrorTitle')}
+            message={t('dashboard.loadErrorBody')}
             onRetry={() => void tripsQuery.refetch()}
           />
         </div>
@@ -120,11 +120,11 @@ export function DashboardPage() {
           <EmptyState
             icon={Compass}
             tone="coral"
-            title="Your first adventure is waiting"
-            description="Create a trip, invite your favourite people and start collecting places you cannot wait to visit."
+            title={t('dashboard.emptyTitle')}
+            description={t('dashboard.emptyBody')}
             action={
               <Button onClick={() => setCreateOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
-                Create your first trip
+                {t('dashboard.createFirst')}
               </Button>
             }
           />
@@ -134,11 +134,11 @@ export function DashboardPage() {
           <EmptyState
             icon={Search}
             tone="sky"
-            title="No trips match that search"
-            description="Try another name or destination."
+            title={t('dashboard.noMatchTitle')}
+            description={t('dashboard.noMatchBody')}
             action={
               <Button variant="secondary" onClick={() => setSearch('')}>
-                Clear search
+                {t('dashboard.clearSearch')}
               </Button>
             }
           />
@@ -152,8 +152,8 @@ export function DashboardPage() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="font-display text-xl font-extrabold">My trips</h2>
-                  <p className="text-xs text-ink-muted">Trips you own and shape</p>
+                  <h2 className="font-display text-xl font-extrabold">{t('dashboard.myTrips')}</h2>
+                  <p className="text-xs text-ink-muted">{t('dashboard.myTripsBody')}</p>
                 </div>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -175,8 +175,8 @@ export function DashboardPage() {
                   <Users className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="font-display text-xl font-extrabold">Shared with you</h2>
-                  <p className="text-xs text-ink-muted">Trips where you are a travel buddy</p>
+                  <h2 className="font-display text-xl font-extrabold">{t('dashboard.shared')}</h2>
+                  <p className="text-xs text-ink-muted">{t('dashboard.sharedBody')}</p>
                 </div>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

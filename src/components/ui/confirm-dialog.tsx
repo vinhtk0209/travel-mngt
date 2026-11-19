@@ -2,6 +2,7 @@ import { AlertTriangle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from './button'
 import { Modal } from './modal'
+import { useI18n } from '@/i18n/i18n-context'
 
 type ConfirmDialogProps = {
   open: boolean
@@ -21,11 +22,15 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   isLoading = false,
   tone = 'danger',
 }: ConfirmDialogProps) {
+  const { t } = useI18n()
+  const confirmText = confirmLabel ?? t('common.confirm')
+  const cancelText = cancelLabel ?? t('common.cancel')
+
   return (
     <Modal
       open={open}
@@ -35,14 +40,14 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-            {cancelLabel}
+            {cancelText}
           </Button>
           <Button
             variant={tone === 'danger' ? 'danger' : 'primary'}
             onClick={onConfirm}
             isLoading={isLoading}
           >
-            {confirmLabel}
+            {confirmText}
           </Button>
         </>
       }

@@ -16,11 +16,13 @@ import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { useAuth } from '../auth-context'
 import { useProfile, useUpdateProfile } from '../hooks'
 import { profileSchema, type ProfileValues } from '../schemas'
 
 export function ProfilePage() {
+  const { t } = useI18n()
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const { data: profile, displayName, email, isLoading } = useProfile()
@@ -49,9 +51,9 @@ export function ProfilePage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await updateProfile.mutateAsync(values.displayName)
-      toast.success('Profile updated')
+      toast.success(t('profile.saved'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not update your profile'))
+      toast.error(getErrorMessage(error, t('profile.saveError')))
     }
   })
 
@@ -60,7 +62,7 @@ export function ProfilePage() {
       await signOut()
       navigate('/login')
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not sign out'))
+      toast.error(getErrorMessage(error, t('auth.signOutError')))
     }
   }
 
@@ -68,9 +70,9 @@ export function ProfilePage() {
     if (!file) return
     try {
       await uploadAvatar.mutateAsync({ file, previousPath: profile?.avatar_url })
-      toast.success('Avatar updated')
+      toast.success(t('profile.avatarUpdated'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not update your avatar'))
+      toast.error(getErrorMessage(error, t('profile.avatarUpdateError')))
     }
   }
 
@@ -78,21 +80,21 @@ export function ProfilePage() {
     try {
       await removeAvatar.mutateAsync(profile?.avatar_url)
       setConfirmRemoveAvatar(false)
-      toast.success('Avatar removed')
+      toast.success(t('profile.avatarRemoved'))
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not remove your avatar'))
+      toast.error(getErrorMessage(error, t('profile.avatarRemoveError')))
     }
   }
 
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Your account"
-        title="Profile"
-        description="How your travel buddies see you across shared trips."
+        eyebrow={t('profile.eyebrow')}
+        title={t('profile.title')}
+        description={t('profile.description')}
         actions={
           <Button variant="secondary" onClick={() => void handleSignOut()}>
-            <LogOut className="h-4 w-4" /> Sign out
+            <LogOut className="h-4 w-4" /> {t('profile.signOut')}
           </Button>
         }
       />
@@ -113,7 +115,7 @@ export function ProfilePage() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               className="sr-only"
-              aria-label="Choose an avatar photo"
+              aria-label={t('profile.choosePhoto')}
               onChange={(event) => {
                 const file = event.target.files?.[0]
                 event.target.value = ''
@@ -127,7 +129,7 @@ export function ProfilePage() {
               isLoading={uploadAvatar.isPending}
               leftIcon={<Camera className="h-3.5 w-3.5" />}
             >
-              Upload photo
+              {t('profile.uploadPhoto')}
             </Button>
             {profile?.avatar_url ? (
               <Button
@@ -138,22 +140,21 @@ export function ProfilePage() {
                 disabled={removeAvatar.isPending}
                 leftIcon={<Trash2 className="h-3.5 w-3.5" />}
               >
-                Remove
+                {t('profile.remove')}
               </Button>
             ) : null}
           </div>
-          <p className="text-[11px] text-ink-muted">JPG, PNG or WEBP · square photos look best</p>
+          <p className="text-[11px] text-ink-muted">{t('profile.photoHint')}</p>
 
           <span className="rounded-full bg-mint-100 px-3 py-1 text-xs font-bold text-mint-600">
-            {profile ? 'Profile connected' : 'New explorer'}
+            {profile ? t('profile.connected') : t('profile.newExplorer')}
           </span>
         </Card>
 
         <Card className="p-6 sm:p-7">
-          <h2 className="text-xl font-bold">Account details</h2>
+          <h2 className="text-xl font-bold">{t('profile.accountDetails')}</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Your email is used for sign-in and account recovery. It is never shown publicly outside
-            your trips.
+            {t('profile.emailPrivacy')}
           </p>
 
           {isLoading ? (
@@ -163,16 +164,16 @@ export function ProfilePage() {
             </div>
           ) : (
             <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
-              <Field label="Display name" htmlFor="displayName" error={errors.displayName?.message}>
+              <Field label={t('profile.displayName')} htmlFor="displayName" error={errors.displayName?.message}>
                 <Input id="displayName" {...register('displayName')} />
               </Field>
 
-              <Field label="Email" htmlFor="email" hint="Contact support to change your email.">
+              <Field label={t('profile.email')} htmlFor="email" hint={t('profile.emailHint')}>
                 <Input id="email" value={email} readOnly disabled />
               </Field>
 
               <Button type="submit" isLoading={updateProfile.isPending}>
-                <Save className="h-4 w-4" /> Save changes
+                <Save className="h-4 w-4" /> {t('common.save')}
               </Button>
             </form>
           )}
@@ -184,9 +185,9 @@ export function ProfilePage() {
         onClose={() => setConfirmRemoveAvatar(false)}
         onConfirm={() => void handleRemoveAvatar()}
         isLoading={removeAvatar.isPending}
-        title="Remove your avatar?"
-        confirmLabel="Remove photo"
-        description="Your profile will fall back to your initials across all trips."
+        title={t('profile.removeAvatarTitle')}
+        confirmLabel={t('profile.removePhoto')}
+        description={t('profile.removeAvatarBody')}
       />
     </AppShell>
   )

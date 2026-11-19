@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { SetupNotice } from '@/components/shared/setup-notice'
 import { AuthProvider } from '@/features/auth/auth-context'
+import { I18nProvider } from '@/i18n/i18n-context'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { queryClient } from './query-client'
 import { router } from './router'
@@ -27,8 +28,10 @@ export function App() {
       {isSupabaseConfigured ? (
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <RouterProvider router={router} />
-            <AppToaster />
+            <I18nProvider>
+              <RouterProvider router={router} />
+              <AppToaster />
+            </I18nProvider>
           </AuthProvider>
         </QueryClientProvider>
       ) : (

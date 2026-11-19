@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { queryKeys } from '@/lib/query-keys'
 import { useAuth } from '@/features/auth/auth-context'
 import { getErrorMessage } from '@/utils/errors'
+import { translate } from '@/i18n/translate'
 import type { TripItemImage } from '@/features/images/api'
 import {
   createPlace,
@@ -38,7 +39,7 @@ export function useCreatePlace(tripId: string) {
 
   return useMutation({
     mutationFn: (input: { values: PlaceInput; files: File[] }) => {
-      if (!user) throw new Error('You must be signed in')
+      if (!user) throw new Error(translate('errors.authRequired'))
       return createPlace({ tripId, userId: user.id, ...input })
     },
     onSuccess: invalidate,
@@ -67,9 +68,9 @@ export function useDeletePlace(tripId: string) {
     mutationFn: (itemId: string) => deletePlace(itemId),
     onSuccess: () => {
       invalidate()
-      toast.success('Place removed')
+      toast.success(translate('errors.place.removed'))
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Could not remove this place')),
+    onError: (error) => toast.error(getErrorMessage(error, translate('errors.place.remove'))),
   })
 }
 
@@ -80,7 +81,7 @@ export function useTogglePlace(tripId: string) {
     mutationFn: (input: { itemId: string; status: 'todo' | 'completed' }) =>
       setPlaceStatus(input.itemId, input.status),
     onSuccess: invalidate,
-    onError: (error) => toast.error(getErrorMessage(error, 'Could not update this place')),
+    onError: (error) => toast.error(getErrorMessage(error, translate('errors.place.update'))),
   })
 }
 
@@ -109,7 +110,7 @@ export function useReorderPlaces(tripId: string) {
       if (context?.previous) {
         queryClient.setQueryData(queryKeys.tripItems(tripId), context.previous)
       }
-      toast.error(getErrorMessage(error, 'Could not reorder places'))
+      toast.error(getErrorMessage(error, translate('errors.place.reorder')))
     },
     onSettled: invalidate,
   })

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { translate } from '@/i18n/translate'
 import type { SharePreview, ShareRole, TripShare } from './types'
 
 export async function getOrCreateTripShare(
@@ -12,7 +13,7 @@ export async function getOrCreateTripShare(
 
   if (error) throw error
   const share = data as TripShare | null
-  if (!share?.token) throw new Error('The share link could not be created')
+  if (!share?.token) throw new Error(translate('sharing.errors.create'))
   return share
 }
 
@@ -29,7 +30,7 @@ export async function regenerateTripShareToken(tripId: string): Promise<string> 
     p_trip_id: tripId,
   })
   if (error) throw error
-  if (typeof data !== 'string') throw new Error('The share link could not be regenerated')
+  if (typeof data !== 'string') throw new Error(translate('sharing.errors.regenerate'))
   return data
 }
 
@@ -47,6 +48,6 @@ export async function resolveTripShare(token: string): Promise<SharePreview | nu
 export async function joinTripByShare(token: string): Promise<string> {
   const { data, error } = await supabase.rpc('join_trip_by_share', { p_token: token })
   if (error) throw error
-  if (typeof data !== 'string') throw new Error('The trip could not be joined')
+  if (typeof data !== 'string') throw new Error(translate('sharing.errors.join'))
   return data
 }

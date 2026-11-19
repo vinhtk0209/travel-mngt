@@ -1,5 +1,7 @@
 import { CalendarDays, Camera, Coffee, MapPin, Sparkles, Utensils } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useI18n } from '@/i18n/i18n-context'
+import { LanguageToggle } from './language-toggle'
 import { Logo } from './logo'
 import { ThemeToggle } from './theme-toggle'
 
@@ -11,12 +13,17 @@ type AuthShellProps = {
 }
 
 export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
+  const { t } = useI18n()
+
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[1.02fr_0.98fr]">
       <div className="flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-14">
         <div className="flex items-center justify-between">
           <Logo to="/" />
-          <ThemeToggle />
+          <div className="flex items-center gap-1.5">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center py-8">
@@ -35,7 +42,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
         </div>
 
         <p className="text-center text-xs text-ink-muted lg:text-left">
-          Plan slowly, travel often. Wanderlist keeps every little idea in one happy place.
+          {t('auth.shellFooter')}
         </p>
       </div>
 
@@ -45,22 +52,21 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
         <div className="relative flex h-full flex-col justify-center px-12 py-16">
           <span className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white/60 px-3 py-1.5 text-xs font-extrabold uppercase tracking-widest text-ink-soft backdrop-blur">
             <Sparkles className="h-3.5 w-3.5 text-coral-500" />
-            Plan together
+            {t('auth.shellBadge')}
           </span>
           <h2 className="max-w-md font-display text-4xl font-extrabold leading-tight text-ink">
-            Every trip starts with a tiny, happy list.
+            {t('auth.shellHeading')}
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-soft">
-            Collect places, tag the good stuff, add photos, and build the itinerary with the
-            people you love.
+            {t('auth.shellBody')}
           </p>
 
           <div className="mt-9 max-w-sm rounded-3xl border border-white/70 bg-white/75 p-5 shadow-lift backdrop-blur">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-display text-lg font-extrabold">Da Lat weekend</p>
+                <p className="font-display text-lg font-extrabold">{t('auth.sampleTrip')}</p>
                 <p className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
-                  <CalendarDays className="h-3.5 w-3.5" /> 12 – 14 March
+                  <CalendarDays className="h-3.5 w-3.5" /> {t('auth.sampleDates')}
                 </p>
               </div>
               <span className="flex -space-x-2">
@@ -72,10 +78,10 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
 
             <div className="mt-4 space-y-2.5">
               {[
-                { icon: Coffee, label: 'Morning coffee at the lake', tag: 'Đi ăn', done: true },
-                { icon: Camera, label: 'Sunset photo walk', tag: 'Check-in', done: true },
-                { icon: Utensils, label: 'Night market food crawl', tag: 'Quán ăn', done: false },
-                { icon: MapPin, label: 'Waterfall day trip', tag: 'Đi chơi', done: false },
+                { icon: Coffee, label: t('auth.sampleCoffee'), tag: t('auth.sampleTagCoffee'), done: true },
+                { icon: Camera, label: t('auth.sampleWalk'), tag: t('auth.sampleTagCheckIn'), done: true },
+                { icon: Utensils, label: t('auth.sampleFood'), tag: t('auth.sampleTagFood'), done: false },
+                { icon: MapPin, label: t('auth.sampleWaterfall'), tag: t('auth.sampleTagOuting'), done: false },
               ].map((place) => (
                 <div
                   key={place.label}

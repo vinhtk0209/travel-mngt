@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { translate } from '@/i18n/translate'
 import type { AssistantMode } from '@/lib/supabase/database.types'
 
 export type AssistantTurn = {
@@ -16,7 +17,7 @@ function describeFunctionError(error: unknown): string {
     const message = (error as { message?: unknown }).message
     if (typeof message === 'string' && message) return message
   }
-  return 'The trip assistant could not answer right now'
+  return translate('assistant.errors.generic')
 }
 
 export async function fetchAssistantPreference(
@@ -80,7 +81,7 @@ export async function askTripAssistant(input: {
   }
 
   if (!data || typeof data.text !== 'string' || data.text.trim().length === 0) {
-    throw new Error('The trip assistant returned an empty answer')
+    throw new Error(translate('assistant.errors.empty'))
   }
 
   return data

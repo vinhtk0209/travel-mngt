@@ -32,12 +32,14 @@ import { useLeaveTrip, useTripMembers, useTripPermissions } from '@/features/tri
 import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripRealtime } from '@/hooks/use-trip-realtime'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { formatDateRange } from '@/utils/date'
 import { cn } from '@/utils/cn'
 import { TripFormModal } from '../components/trip-form-modal'
 import { useDeleteTrip, useTrip } from '../hooks'
 
 export function TripSettingsPage() {
+  const { t } = useI18n()
   const { tripId } = useParams<{ tripId: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -79,8 +81,8 @@ export function TripSettingsPage() {
     return (
       <AppShell>
         <ErrorState
-          title="We could not open trip settings"
-          message="The trip may have been deleted or you may no longer have access."
+          title={t('settings.loadErrorTitle')}
+          message={t('settings.loadErrorBody')}
           onRetry={() => void tripQuery.refetch()}
         />
       </AppShell>
@@ -109,20 +111,20 @@ export function TripSettingsPage() {
         to={`/trips/${trip.id}`}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft transition hover:text-coral-600"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to trip
+        <ArrowLeft className="h-4 w-4" /> {t('settings.back')}
       </Link>
 
       <PageHeader
-        eyebrow="Behind the scenes"
-        title="Trip settings"
-        description="Shape the trip details, invite your crew and keep everything tidy."
+        eyebrow={t('settings.eyebrow')}
+        title={t('settings.title')}
+        description={t('settings.description')}
         actions={
           <Button
             variant="secondary"
             onClick={() => setEditOpen(true)}
             leftIcon={<Pencil className="h-4 w-4" />}
           >
-            Edit details
+            {t('settings.edit')}
           </Button>
         }
       />
@@ -133,19 +135,19 @@ export function TripSettingsPage() {
             <CoverImage
               src={coverUrl}
               alt={trip.name}
-              fallbackLabel={trip.destination || 'Trip'}
+              fallbackLabel={trip.destination || t('settings.title')}
               className="h-24 w-full shrink-0 rounded-2xl sm:w-40"
             />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display text-xl font-extrabold">{trip.name}</h2>
                 <Badge variant={permissions.isOwner ? 'butter' : 'mint'}>
-                  {permissions.isOwner ? 'Owner' : 'Editor'}
+                  {permissions.isOwner ? t('role.owner') : t('role.editor')}
                 </Badge>
               </div>
               <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-soft">
                 <MapPin className="h-3.5 w-3.5 text-coral-400" />
-                {trip.destination || 'Somewhere lovely'}
+                {trip.destination || t('common.somewhereLovely')}
               </p>
               <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-soft">
                 <CalendarDays className="h-3.5 w-3.5 text-coral-400" />
@@ -166,8 +168,12 @@ export function TripSettingsPage() {
                   <Users className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-extrabold">Travel buddies</h2>
-                  <p className="text-xs text-ink-muted">{members.length} people on this trip</p>
+                  <h2 className="font-display text-lg font-extrabold">{t('settings.buddies')}</h2>
+                  <p className="text-xs text-ink-muted">
+                    {members.length === 1
+                      ? t('settings.peopleOne', { count: members.length })
+                      : t('settings.peopleMany', { count: members.length })}
+                  </p>
                 </div>
               </div>
               {permissions.isOwner ? (
@@ -177,7 +183,7 @@ export function TripSettingsPage() {
                   onClick={() => setShareOpen(true)}
                   leftIcon={<UserPlus className="h-3.5 w-3.5" />}
                 >
-                  Share trip
+                  {t('detail.share')}
                 </Button>
               ) : null}
             </div>
@@ -197,8 +203,8 @@ export function TripSettingsPage() {
                 <Tags className="h-4 w-4" />
               </span>
               <div>
-                <h2 className="font-display text-lg font-extrabold">Tags</h2>
-                <p className="text-xs text-ink-muted">Filter places by food, views, vibes…</p>
+                <h2 className="font-display text-lg font-extrabold">{t('settings.tags')}</h2>
+                <p className="text-xs text-ink-muted">{t('settings.tagsBody')}</p>
               </div>
             </div>
             <TagManager tripId={trip.id} tags={tags} canEdit={permissions.canEdit} />
@@ -213,14 +219,14 @@ export function TripSettingsPage() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-extrabold">Wanderbot default</h2>
+                  <h2 className="font-display text-lg font-extrabold">{t('settings.wanderbot')}</h2>
                   <p className="text-xs text-ink-muted">
-                    New members start in this mode. Everyone can switch for themselves.
+                    {t('settings.wanderbotBody')}
                   </p>
                 </div>
               </div>
               {setAssistantMode.isPending ? (
-                <span className="text-[11px] font-bold text-ink-muted">Saving…</span>
+                <span className="text-[11px] font-bold text-ink-muted">{t('common.saving')}</span>
               ) : null}
             </div>
 
@@ -228,16 +234,16 @@ export function TripSettingsPage() {
               <AssistantModeCard
                 active={trip.assistant_mode === 'basic'}
                 icon={<Bot className="h-4 w-4" />}
-                title="Basic"
-                description="Curated packing, budget and itinerary tips. No API key, always available."
+                title={t('settings.basic')}
+                description={t('settings.basicBody')}
                 onClick={() => setAssistantMode.mutate('basic')}
                 disabled={setAssistantMode.isPending}
               />
               <AssistantModeCard
                 active={trip.assistant_mode === 'gemini'}
                 icon={<Sparkles className="h-4 w-4" />}
-                title="Gemini AI"
-                description="Free-form answers grounded in this trip. Needs a Gemini API key on the server."
+                title={t('settings.gemini')}
+                description={t('settings.geminiBody')}
                 onClick={() => setAssistantMode.mutate('gemini')}
                 disabled={setAssistantMode.isPending}
               />
@@ -245,7 +251,7 @@ export function TripSettingsPage() {
 
             {setAssistantMode.isError ? (
               <p role="alert" className="mt-3 text-xs font-semibold text-rose-600">
-                {getErrorMessage(setAssistantMode.error, 'Could not save the assistant mode')}
+                {getErrorMessage(setAssistantMode.error, t('settings.modeError'))}
               </p>
             ) : null}
           </section>
@@ -257,20 +263,20 @@ export function TripSettingsPage() {
               <ShieldAlert className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="font-display text-lg font-extrabold text-rose-700">Careful zone</h2>
-              <p className="text-xs text-rose-500/90">These actions cannot be undone.</p>
+              <h2 className="font-display text-lg font-extrabold text-rose-700">{t('settings.danger')}</h2>
+              <p className="text-xs text-rose-500/90">{t('settings.dangerBody')}</p>
             </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-extrabold text-ink">
-                {permissions.isOwner ? 'Delete this trip' : 'Leave this trip'}
+                {permissions.isOwner ? t('settings.deleteTitle') : t('settings.leaveTitle')}
               </p>
               <p className="text-xs text-ink-soft">
                 {permissions.isOwner
-                  ? 'Remove the trip, its places, photos and members for everyone.'
-                  : 'You will lose access to this trip and its plans immediately.'}
+                  ? t('settings.deleteBody')
+                  : t('settings.leaveBody')}
               </p>
             </div>
             {permissions.isOwner ? (
@@ -279,7 +285,7 @@ export function TripSettingsPage() {
                 onClick={() => setDeleteOpen(true)}
                 leftIcon={<Trash2 className="h-4 w-4" />}
               >
-                Delete trip
+                {t('settings.deleteButton')}
               </Button>
             ) : (
               <Button
@@ -287,7 +293,7 @@ export function TripSettingsPage() {
                 onClick={() => setLeaveOpen(true)}
                 leftIcon={<LogOut className="h-4 w-4" />}
               >
-                Leave trip
+                {t('settings.leaveButton')}
               </Button>
             )}
           </div>
@@ -307,12 +313,11 @@ export function TripSettingsPage() {
         onClose={() => setDeleteOpen(false)}
         onConfirm={() => void handleDelete()}
         isLoading={deleteTrip.isPending}
-        title="Delete this trip forever?"
-        confirmLabel="Delete trip"
+        title={t('settings.deleteConfirmTitle')}
+        confirmLabel={t('settings.deleteButton')}
         description={
           <>
-            <strong>{trip.name}</strong> and everything inside it will be permanently removed.
-            Consider transferring ownership instead if someone else should keep planning.
+            {t('settings.deleteConfirmBody', { name: trip.name })}
           </>
         }
       />
@@ -322,12 +327,11 @@ export function TripSettingsPage() {
         onClose={() => setLeaveOpen(false)}
         onConfirm={() => void handleLeave()}
         isLoading={leaveTrip.isPending}
-        title="Leave this trip?"
-        confirmLabel="Leave trip"
+        title={t('settings.leaveConfirmTitle')}
+        confirmLabel={t('settings.leaveButton')}
         description={
           <>
-            You will lose access to <strong>{trip.name}</strong>. The owner can invite you again
-            later.
+            {t('settings.leaveConfirmBody', { name: trip.name })}
           </>
         }
       />
@@ -350,6 +354,8 @@ function AssistantModeCard({
   onClick: () => void
   disabled?: boolean
 }) {
+  const { t } = useI18n()
+
   return (
     <button
       type="button"
@@ -368,7 +374,7 @@ function AssistantModeCard({
           {icon}
         </span>
         {title}
-        {active ? <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-coral-600">Active</span> : null}
+        {active ? <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-coral-600">{t('common.active')}</span> : null}
       </span>
       <span className="mt-2 block text-xs leading-relaxed text-ink-muted">{description}</span>
     </button>

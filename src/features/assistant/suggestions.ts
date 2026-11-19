@@ -1,6 +1,9 @@
 export type TripIdeaTag = 'beach' | 'mountain' | 'city' | 'food' | 'culture' | 'nature' | 'chill'
 export type TripBudget = 'budget' | 'mid' | 'comfort'
 
+import { getActiveLocale, translate, type TranslationKey } from '@/i18n/translate'
+import type { Locale } from '@/lib/supabase/database.types'
+
 export type TripIdea = {
   id: string
   name: string
@@ -133,14 +136,73 @@ const IDEAS: TripIdea[] = [
   },
 ]
 
-const TAG_LABELS: Record<TripIdeaTag, string> = {
-  beach: 'beach',
-  mountain: 'mountain',
-  city: 'city',
-  food: 'food',
-  culture: 'culture',
-  nature: 'nature',
-  chill: 'slow travel',
+const IDEA_COPY_VI: Record<string, Pick<TripIdea, 'name' | 'description' | 'highlights'>> = {
+  'da-lat-slow': {
+    name: 'Đà Lạt cuối tuần chậm',
+    description: 'Không khí thông reo, cà phê bên hồ và chợ đêm thơm mùi bánh tráng nướng.',
+    highlights: ['Cà phê sáng bên hồ', 'Đi bộ trong rừng thông và thác', 'Ăn vặt chợ đêm'],
+  },
+  'hoi-an-da-nang': {
+    name: 'Hội An & Đà Nẵng',
+    description: 'Đèn lồng, bãi biển dài và tô cao lầu ngon nhất bạn từng thử.',
+    highlights: ['Dạo phố cổ đèn lồng', 'Sáng ở biển An Bàng', 'Hải sản bên sông Hàn'],
+  },
+  'cat-ba': {
+    name: 'Vịnh Hạ Long & Cát Bà',
+    description: 'Đảo đá vôi, hang kayak và hoàng hôn khiến mọi người lặng đi.',
+    highlights: ['Du thuyền qua các đảo đá', 'Dừng chèo kayak và tắm', 'Hải sản ở cảng'],
+  },
+  'sa-pa': {
+    name: 'Ruộng bậc thang Sa Pa',
+    description: 'Sáng núi mát, homestay bản làng và ruộng bậc thang như tranh vẽ.',
+    highlights: ['Trek thung lũng bậc thang', 'Homestay bản H\'Mông', 'Ngắm Fansipan'],
+  },
+  'phu-quoc': {
+    name: 'Phú Quốc thư giãn',
+    description: 'Ngày chân trần, nước ấm và chợ đêm dành cho người mê hải sản.',
+    highlights: ['Tắm biển lúc hoàng hôn', 'Lặn ngắm san hô và đảo', 'Đại tiệc hải sản chợ đêm'],
+  },
+  'ninh-binh': {
+    name: 'Ruộng lúa Ninh Bình',
+    description: 'Hai ngày thuyền, núi đá vôi và đường quê yên tĩnh để nạp lại năng lượng.',
+    highlights: ['Thuyền Tràng An', 'Leo Hang Múa', 'Đạp xe vòng quanh làng'],
+  },
+  'hue-heritage': {
+    name: 'Huế di sản',
+    description: 'Lịch sử cung đình, thuyền sông và ẩm thực xứng đáng một chuyến riêng.',
+    highlights: ['Đại Nội lúc bình minh', 'Thuyền trên sông Hương', 'Thử bún bò Huế'],
+  },
+  'bangkok-bites': {
+    name: 'Bangkok ẩm thực đường phố',
+    description: 'Tàu điện, chùa buổi sáng và đồ ăn đường phố đến khi no nê.',
+    highlights: ['Food tour phố người Hoa', 'Ngày chùa và phà sông', 'Ngắm hoàng hôn trên sân thượng'],
+  },
+  'bali-reset': {
+    name: 'Bali nạp lại',
+    description: 'Ruộng bậc thang, bữa sáng chậm và một ngày biển cuối tuần.',
+    highlights: ['Đi bộ ruộng bậc thang lúc bình minh', 'Thác nước và chùa', 'Chiều ở beach club'],
+  },
+  'tokyo-week': {
+    name: 'Tokyo trong một tuần',
+    description: 'Đêm neon, quán nhỏ và chuyến đi trong ngày khiến một tuần thành quá ngắn.',
+    highlights: ['Đêm Shibuya và Shinjuku', 'Sushi sáng ở chợ', 'Đi trong ngày đến Kamakura'],
+  },
+}
+
+function localizeIdea(idea: TripIdea, locale: Locale): TripIdea {
+  if (locale !== 'vi') return idea
+  const copy = IDEA_COPY_VI[idea.id]
+  return copy ? { ...idea, ...copy } : idea
+}
+
+const TAG_LABELS: Record<TripIdeaTag, TranslationKey> = {
+  beach: 'suggestions.tag.beach',
+  mountain: 'suggestions.tag.mountain',
+  city: 'suggestions.tag.city',
+  food: 'suggestions.tag.food',
+  culture: 'suggestions.tag.culture',
+  nature: 'suggestions.tag.nature',
+  chill: 'suggestions.tag.chill',
 }
 
 const TAG_PATTERNS: Record<TripIdeaTag, RegExp> = {
@@ -207,7 +269,7 @@ function scoreIdea(
   return score
 }
 
-export function suggestTrips(input: string): AssistantReply {
+export function suggestTrips(input: string, locale: Locale = getActiveLocale()): AssistantReply {
   const text = input.trim().toLowerCase()
   const days = parseDays(text)
   const budget = parseBudget(text)
@@ -222,35 +284,40 @@ export function suggestTrips(input: string): AssistantReply {
 
   const ideas = ranked.slice(0, 4).map((entry) => entry.idea)
 
+  const localized = ideas.map((idea) => localizeIdea(idea, locale))
+
   if (wanted.length > 0 && days) {
     return {
-      text: `Here are a few ${days}-day ideas with ${describeTags(wanted)} in mind. Tap one to start planning it.`,
-      ideas,
+      text: translate('suggestions.replyTagsDays', {
+        days,
+        tags: describeTags(wanted, locale),
+      }),
+      ideas: localized,
     }
   }
 
   if (wanted.length > 0) {
     return {
-      text: `Some ${describeTags(wanted)} ideas worth stealing. Tell me how many days you have and I can narrow it down.`,
-      ideas,
+      text: translate('suggestions.replyTags', { tags: describeTags(wanted, locale) }),
+      ideas: localized,
     }
   }
 
   if (days) {
     return {
-      text: `A few ${days}-day escapes that fit together nicely. Want beach, mountains or a city?`,
-      ideas,
+      text: translate('suggestions.replyDays', { days }),
+      ideas: localized,
     }
   }
 
   return {
-    text: 'Here are a few trips I love right now. Tell me a vibe, a budget or how many days you have and I will narrow it down.',
-    ideas,
+    text: translate('suggestions.replyGeneral'),
+    ideas: localized,
   }
 }
 
-function describeTags(tags: TripIdeaTag[]): string {
-  const labels = tags.map((tag) => TAG_LABELS[tag])
+function describeTags(tags: TripIdeaTag[], locale: Locale): string {
+  const labels = tags.map((tag) => translate(TAG_LABELS[tag], undefined, locale))
   if (labels.length === 1) return labels[0]
-  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`
+  return `${labels.slice(0, -1).join(', ')} ${translate('suggestions.and', undefined, locale)} ${labels[labels.length - 1]}`
 }

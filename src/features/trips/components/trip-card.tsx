@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { CoverImage } from '@/components/shared/cover-image'
 import { resolveAvatarUrl } from '@/features/avatars/api'
 import { useAvatarUrls } from '@/features/avatars/hooks'
+import { useI18n } from '@/i18n/i18n-context'
 import { Progress } from '@/components/ui/progress'
 import { formatDateRange, getTripTiming, getTripTimingLabel } from '@/utils/date'
 import type { DashboardTrip } from '../types'
@@ -15,6 +16,7 @@ type TripCardProps = {
 }
 
 export function TripCard({ data, coverUrl }: TripCardProps) {
+  const { t } = useI18n()
   const { trip, members, totalPlaces, completedPlaces, isOwner } = data
   const percent = totalPlaces > 0 ? (completedPlaces / totalPlaces) * 100 : 0
   const timing = getTripTiming(trip.start_date, trip.end_date)
@@ -22,7 +24,7 @@ export function TripCard({ data, coverUrl }: TripCardProps) {
   const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const avatars = members.map((member) => ({
     user_id: member.user_id,
-    display_name: member.profile?.display_name ?? 'Traveler',
+    display_name: member.profile?.display_name ?? t('common.traveler'),
     avatar_url: resolveAvatarUrl(member.profile?.avatar_url, avatarUrls),
   }))
 
@@ -34,7 +36,7 @@ export function TripCard({ data, coverUrl }: TripCardProps) {
       <CoverImage
         src={coverUrl}
         alt={trip.name}
-        fallbackLabel={trip.destination || 'A new adventure'}
+        fallbackLabel={trip.destination || t('common.aNewAdventure')}
         className="h-44 w-full"
         overlay={
           <>
@@ -48,7 +50,7 @@ export function TripCard({ data, coverUrl }: TripCardProps) {
               </Badge>
               {isOwner ? null : (
                 <Badge variant="lavender" className="backdrop-blur">
-                  Shared
+                  {t('card.shared')}
                 </Badge>
               )}
             </div>
@@ -69,20 +71,20 @@ export function TripCard({ data, coverUrl }: TripCardProps) {
           </h3>
           <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-coral-400" />
-            <span className="line-clamp-1">{trip.destination || 'Somewhere lovely'}</span>
+            <span className="line-clamp-1">{trip.destination || t('common.somewhereLovely')}</span>
           </p>
         </div>
 
         <div className="mt-auto space-y-2">
           <div className="flex items-center justify-between text-xs font-bold">
             <span className="text-ink-muted">
-              {completedPlaces}/{totalPlaces} places done
+              {t('card.placesDone', { done: completedPlaces, total: totalPlaces })}
             </span>
             <span className={percent === 100 && totalPlaces > 0 ? 'text-mint-600' : 'text-coral-600'}>
               {Math.round(percent)}%
             </span>
           </div>
-          <Progress value={percent} label={`${trip.name} progress`} />
+          <Progress value={percent} label={t('card.progressLabel', { name: trip.name })} />
           <div className="flex items-center justify-between pt-1">
             <AvatarGroup members={avatars} max={4} />
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted">

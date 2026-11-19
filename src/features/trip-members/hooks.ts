@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import type { TripRole } from '@/lib/supabase/database.types'
 import { useAuth } from '@/features/auth/auth-context'
+import { translate } from '@/i18n/translate'
 import {
   fetchTripMembers,
   leaveTrip,
@@ -76,7 +77,7 @@ export function useLeaveTrip(tripId: string | undefined) {
 
   return useMutation({
     mutationFn: () => {
-      if (!tripId || !user) throw new Error('You must be signed in')
+      if (!tripId || !user) throw new Error(translate('errors.authRequired'))
       return leaveTrip(tripId, user.id)
     },
     onSuccess: invalidate,

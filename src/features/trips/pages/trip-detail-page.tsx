@@ -16,11 +16,13 @@ import { TripChatSection } from '@/features/chat/components/trip-chat-section'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
+import { useI18n } from '@/i18n/i18n-context'
 import { TripPlacesSection } from '@/features/trip-items/components/trip-places-section'
 import { useTrip } from '../hooks'
 import { formatDateRange, getTripTiming, getTripTimingLabel } from '@/utils/date'
 
 export function TripDetailPage() {
+  const { t } = useI18n()
   const { tripId } = useParams<{ tripId: string }>()
   const tripQuery = useTrip(tripId)
   const membersQuery = useTripMembers(tripId)
@@ -38,7 +40,7 @@ export function TripDetailPage() {
   const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const avatars = members.map((member) => ({
     user_id: member.user_id,
-    display_name: member.profile?.display_name ?? 'Traveler',
+    display_name: member.profile?.display_name ?? t('common.traveler'),
     avatar_url: resolveAvatarUrl(member.profile?.avatar_url, avatarUrls),
   }))
 
@@ -48,7 +50,7 @@ export function TripDetailPage() {
         to="/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft transition hover:text-coral-600"
       >
-        <ArrowLeft className="h-4 w-4" /> All trips
+        <ArrowLeft className="h-4 w-4" /> {t('detail.allTrips')}
       </Link>
 
       {tripQuery.isLoading ? (
@@ -59,8 +61,8 @@ export function TripDetailPage() {
         </div>
       ) : tripQuery.isError || !trip ? (
         <ErrorState
-          title="This trip is out of reach"
-          message="It may have been deleted, or you might no longer be a member of this trip."
+          title={t('detail.notFoundTitle')}
+          message={t('detail.notFoundBody')}
           onRetry={() => void tripQuery.refetch()}
         />
       ) : (
@@ -68,7 +70,7 @@ export function TripDetailPage() {
           <CoverImage
             src={coverUrl}
             alt={trip.name}
-            fallbackLabel={trip.destination || 'A new adventure'}
+            fallbackLabel={trip.destination || t('common.aNewAdventure')}
             className="h-64 w-full rounded-4xl border border-white/70 shadow-lift sm:h-80"
             overlay={
               <>
@@ -82,7 +84,7 @@ export function TripDetailPage() {
                   </Badge>
                   {permissions.role ? (
                     <Badge variant="lavender" className="capitalize backdrop-blur">
-                      {permissions.role === 'owner' ? 'You own this' : permissions.role}
+                      {permissions.role === 'owner' ? t('detail.youOwn') : t(`role.${permissions.role}`)}
                     </Badge>
                   ) : null}
                 </div>
@@ -93,7 +95,7 @@ export function TripDetailPage() {
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-white/85">
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="h-4 w-4" />
-                      {trip.destination || 'Somewhere lovely'}
+                      {trip.destination || t('common.somewhereLovely')}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <CalendarDays className="h-4 w-4" />
@@ -112,14 +114,16 @@ export function TripDetailPage() {
                 <div>
                   <p className="inline-flex items-center gap-1.5 text-sm font-extrabold text-ink">
                     <Users className="h-4 w-4 text-coral-400" />
-                    {members.length} {members.length === 1 ? 'traveler' : 'travelers'}
+                    {members.length === 1
+                      ? t('detail.travelerOne', { count: members.length })
+                      : t('detail.travelersMany', { count: members.length })}
                   </p>
                   <p className="text-xs text-ink-muted">
                     {members
                       .slice(0, 3)
-                      .map((member) => member.profile?.display_name ?? 'Traveler')
+                      .map((member) => member.profile?.display_name ?? t('common.traveler'))
                       .join(', ')}
-                    {members.length > 3 ? ` +${members.length - 3} more` : ''}
+                    {members.length > 3 ? ` ${t('common.more', { count: members.length - 3 })}` : ''}
                   </p>
                 </div>
               </div>
@@ -134,7 +138,7 @@ export function TripDetailPage() {
                 onClick={() => setAssistantOpen(true)}
                 leftIcon={<Sparkles className="h-4 w-4" />}
               >
-                Ask Wanderbot
+                {t('detail.ask')}
               </Button>
               {permissions.isOwner ? (
                 <Button
@@ -142,7 +146,7 @@ export function TripDetailPage() {
                   onClick={() => setShareOpen(true)}
                   leftIcon={<Share2 className="h-4 w-4" />}
                 >
-                  Share trip
+                  {t('detail.share')}
                 </Button>
               ) : null}
               {permissions.canEdit ? (
@@ -150,7 +154,7 @@ export function TripDetailPage() {
                   to={`/trips/${trip.id}/settings`}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-white/80 px-5 text-sm font-bold text-ink transition hover:border-coral-200 hover:bg-coral-50"
                 >
-                  <Settings2 className="h-4 w-4" /> Trip settings
+                  <Settings2 className="h-4 w-4" /> {t('detail.settings')}
                 </Link>
               ) : null}
             </div>

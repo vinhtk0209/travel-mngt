@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import type { TripMessage } from './utils'
+import { translate } from '@/i18n/translate'
 
 export async function fetchTripMessages(tripId: string): Promise<TripMessage[]> {
   const { data, error } = await supabase
@@ -19,8 +20,8 @@ export async function sendTripMessage(input: {
   content: string
 }): Promise<TripMessage> {
   const content = input.content.trim()
-  if (!content) throw new Error('Write a message first')
-  if (content.length > 2000) throw new Error('Messages are limited to 2000 characters')
+  if (!content) throw new Error(translate('chat.errors.empty'))
+  if (content.length > 2000) throw new Error(translate('chat.errors.tooLong'))
 
   const { data, error } = await supabase
     .from('trip_messages')
@@ -29,6 +30,6 @@ export async function sendTripMessage(input: {
     .single()
 
   if (error) throw error
-  if (!data) throw new Error('The message could not be sent')
+  if (!data) throw new Error(translate('chat.errors.send'))
   return data
 }

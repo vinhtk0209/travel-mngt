@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useI18n } from '@/i18n/i18n-context'
 
 export type LightboxImage = {
   url: string
@@ -15,6 +16,7 @@ type ImageLightboxProps = {
 }
 
 export function ImageLightbox({ images, index, onClose, onIndexChange }: ImageLightboxProps) {
+  const { t } = useI18n()
   const current = images[index]
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function ImageLightbox({ images, index, onClose, onIndexChange }: ImageLi
       className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/80 p-4 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
-      aria-label="Photo preview"
+      aria-label={t('lightbox.close')}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose()
       }}
@@ -56,18 +58,18 @@ export function ImageLightbox({ images, index, onClose, onIndexChange }: ImageLi
             type="button"
             onClick={() => onIndexChange((index - 1 + images.length) % images.length)}
             className="rounded-full p-1.5 hover:bg-coral-50"
-            aria-label="Previous photo"
+            aria-label={t('lightbox.previous')}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span>
-            {index + 1} / {images.length}
+            {t('lightbox.counter', { current: index + 1, total: images.length })}
           </span>
           <button
             type="button"
             onClick={() => onIndexChange((index + 1) % images.length)}
             className="rounded-full p-1.5 hover:bg-coral-50"
-            aria-label="Next photo"
+            aria-label={t('lightbox.next')}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -77,7 +79,7 @@ export function ImageLightbox({ images, index, onClose, onIndexChange }: ImageLi
           onClick={onClose}
           className="absolute right-2 top-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-ink shadow-card hover:bg-white"
         >
-          Close
+          {t('common.close')}
         </button>
       </div>
     </div>,

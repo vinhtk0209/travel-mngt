@@ -1,5 +1,6 @@
 import { Plane } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useI18n } from '@/i18n/i18n-context'
 import { cn } from '@/utils/cn'
 
 type LogoProps = {
@@ -9,11 +10,13 @@ type LogoProps = {
 }
 
 export function Logo({ compact = false, className, to = '/dashboard' }: LogoProps) {
+  const { t } = useI18n()
+
   return (
     <Link
       to={to}
       className={cn('inline-flex items-center gap-2.5', className)}
-      aria-label="Wanderlist home"
+      aria-label={t('nav.home')}
     >
       <span className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-500 text-white shadow-[0_10px_20px_-10px_rgba(255,112,89,0.9)]">
         <Plane className="h-5 w-5 -rotate-12" strokeWidth={2.4} />

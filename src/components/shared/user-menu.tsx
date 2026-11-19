@@ -9,10 +9,12 @@ import { useProfile } from '@/features/auth/hooks'
 import { resolveAvatarUrl } from '@/features/avatars/api'
 import { useAvatarUrls } from '@/features/avatars/hooks'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { cn } from '@/utils/cn'
 
 export function UserMenu() {
   const { user, signOut } = useAuth()
+  const { t } = useI18n()
   const { displayName, email, data: profile } = useProfile()
   const avatarUrls = useAvatarUrls([profile?.avatar_url])
   const avatarSrc =
@@ -43,10 +45,10 @@ export function UserMenu() {
     setIsSigningOut(true)
     try {
       await signOut()
-      toast.success('See you next trip!')
+      toast.success(t('auth.signOutSuccess'))
       navigate('/login')
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not sign out'))
+      toast.error(getErrorMessage(error, t('auth.signOutError')))
     } finally {
       setIsSigningOut(false)
       setOpen(false)
@@ -92,7 +94,7 @@ export function UserMenu() {
             onClick={() => setOpen(false)}
             className="mt-1 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-bold text-ink-soft transition hover:bg-coral-50 hover:text-coral-700"
           >
-            <UserRound className="h-4 w-4" /> Your profile
+            <UserRound className="h-4 w-4" /> {t('nav.profile')}
           </Link>
           <button
             type="button"
@@ -102,7 +104,7 @@ export function UserMenu() {
             className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
           >
             {isSigningOut ? <Spinner className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
-            Sign out
+            {t('nav.signOut')}
           </button>
         </div>
       ) : null}

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { fetchProfile, updateProfile } from './api'
 import { useAuth } from './auth-context'
+import { translate } from '@/i18n/translate'
 
 export function useProfile() {
   const { user } = useAuth()
@@ -16,7 +17,7 @@ export function useProfile() {
   const fallbackName =
     (user?.user_metadata?.display_name as string | undefined) ??
     user?.email?.split('@')[0] ??
-    'Traveler'
+    translate('common.traveler')
 
   return {
     ...query,
@@ -31,7 +32,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: (displayName: string) => {
-      if (!user) throw new Error('You must be signed in')
+      if (!user) throw new Error(translate('errors.authRequired'))
       return updateProfile(user.id, { display_name: displayName })
     },
     onSuccess: () => {

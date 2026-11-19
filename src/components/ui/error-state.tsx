@@ -1,5 +1,6 @@
 import { CloudOff } from 'lucide-react'
 import { Button } from './button'
+import { translate } from '@/i18n/translate'
 
 type ErrorStateProps = {
   title?: string
@@ -9,8 +10,8 @@ type ErrorStateProps = {
 }
 
 export function ErrorState({
-  title = 'We hit a little detour',
-  message = 'Something went wrong while loading this. Give it another try.',
+  title = translate('errorState.title'),
+  message = translate('errorState.body'),
   onRetry,
   className,
 }: ErrorStateProps) {
@@ -28,7 +29,7 @@ export function ErrorState({
       <p className="mt-1.5 max-w-sm text-sm text-ink-soft">{message}</p>
       {onRetry ? (
         <Button variant="secondary" className="mt-5" onClick={onRetry}>
-          Try again
+          {translate('errorState.retry')}
         </Button>
       ) : null}
     </div>

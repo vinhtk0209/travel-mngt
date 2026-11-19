@@ -29,6 +29,7 @@ import { ViewToggle, type ViewMode } from '@/components/shared/view-toggle'
 import { ImageLightbox, type LightboxImage } from '@/features/images/components/image-lightbox'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { useTripTags } from '@/features/tags/hooks'
+import { useI18n } from '@/i18n/i18n-context'
 import { useDeletePlace, useReorderPlaces, useTogglePlace, useTripItems } from '../hooks'
 import type { TripItemWithMeta } from '../api'
 import { PlaceFormModal } from './place-form-modal'
@@ -42,6 +43,7 @@ type TripPlacesSectionProps = {
 }
 
 export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
+  const { t } = useI18n()
   const itemsQuery = useTripItems(tripId)
   const tagsQuery = useTripTags(tripId)
   const togglePlace = useTogglePlace(tripId)
@@ -166,21 +168,21 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-2xl font-extrabold tracking-tight">Places & plans</h2>
-            <Badge variant="neutral">{items.length} places</Badge>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight">{t('places.title')}</h2>
+            <Badge variant="neutral">{t('places.count', { count: items.length })}</Badge>
             {!canEdit ? (
               <Badge variant="sky" icon={<Eye className="h-3 w-3" />}>
-                View only
+                {t('places.viewOnly')}
               </Badge>
             ) : null}
           </div>
           <p className="mt-1 text-sm text-ink-soft">
-            Every stop, snack and photo moment in one list.
+            {t('places.description')}
           </p>
         </div>
         {canEdit ? (
           <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-            Add place
+            {t('places.add')}
           </Button>
         ) : null}
       </div>
@@ -189,11 +191,11 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral-500">
-              Trip progress
+              {t('places.progress')}
             </p>
             <p className="mt-1 font-display text-2xl font-extrabold">
               {completedCount}
-              <span className="text-ink-muted"> / {items.length} completed</span>
+              <span className="text-ink-muted"> {t('places.completed', { count: items.length })}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -205,7 +207,7 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
             </span>
           </div>
         </div>
-        <Progress value={percent} className="mt-3" label="Trip completion" />
+        <Progress value={percent} className="mt-3" label={t('places.progressLabel')} />
       </div>
 
       <div className="surface-card space-y-3 p-4 sm:p-5">
@@ -215,9 +217,9 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search places, notes or tags…"
+              placeholder={t('places.searchPlaceholder')}
               className="pl-10"
-              aria-label="Search places"
+              aria-label={t('places.searchLabel')}
             />
           </div>
 
@@ -225,13 +227,13 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
             <div
               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/80 p-1"
               role="group"
-              aria-label="Filter by status"
+              aria-label={t('places.filterLabel')}
             >
               {(
                 [
-                  { value: 'all', label: 'All' },
-                  { value: 'todo', label: 'To do' },
-                  { value: 'completed', label: 'Done' },
+                  { value: 'all', label: t('places.all') },
+                  { value: 'todo', label: t('places.todo') },
+                  { value: 'completed', label: t('places.done') },
                 ] as const
               ).map((option) => (
                 <button
@@ -254,7 +256,7 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
 
             {isFiltering ? (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="h-3.5 w-3.5" /> Clear
+                <X className="h-3.5 w-3.5" /> {t('places.clear')}
               </Button>
             ) : null}
           </div>
@@ -263,7 +265,7 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         {tags.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-3">
             <span className="mr-1 text-[11px] font-extrabold uppercase tracking-wide text-ink-muted">
-              Tags
+              {t('places.tags')}
             </span>
             {tags.map((tag) => {
               const selected = tagFilter.includes(tag.id)
@@ -287,13 +289,12 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
 
       {canEdit && !isFiltering && items.length > 1 ? (
         <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-muted">
-          <CheckCircle2 className="h-3.5 w-3.5 text-mint-500" /> Tip: drag the handle to reorder
-          your days.
+          <CheckCircle2 className="h-3.5 w-3.5 text-mint-500" /> {t('places.reorderTip')}
         </p>
       ) : null}
       {isFiltering ? (
         <p className="text-xs font-semibold text-ink-muted">
-          Reordering is paused while filters are active.
+          {t('places.reorderPaused')}
         </p>
       ) : null}
 
@@ -305,20 +306,20 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         </div>
       ) : itemsQuery.isError ? (
         <ErrorState
-          title="Could not load places"
-          message="Your plans are safe — we just could not fetch them. Try again in a moment."
+          title={t('places.loadErrorTitle')}
+          message={t('places.loadErrorBody')}
           onRetry={() => void itemsQuery.refetch()}
         />
       ) : items.length === 0 ? (
         <EmptyState
           icon={MapPin}
           tone="mint"
-          title="No places yet"
-          description="Add the first restaurant, viewpoint or lazy afternoon stop. Your trip starts taking shape here."
+          title={t('places.emptyTitle')}
+          description={t('places.emptyBody')}
           action={
             canEdit ? (
               <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-                Add your first place
+                {t('places.addFirst')}
               </Button>
             ) : undefined
           }
@@ -327,11 +328,11 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         <EmptyState
           icon={Search}
           tone="sky"
-          title="Nothing matches those filters"
-          description="Try a different search or clear the filters to see every place again."
+          title={t('places.noMatchTitle')}
+          description={t('places.noMatchBody')}
           action={
             <Button variant="secondary" onClick={clearFilters}>
-              Clear filters
+              {t('places.clearFilters')}
             </Button>
           }
         />
@@ -393,14 +394,9 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
         isLoading={deletePlace.isPending}
-        title="Delete this place?"
-        confirmLabel="Delete place"
-        description={
-          <>
-            <strong>{deleteTarget?.name}</strong> and its photos will be removed from the trip. This
-            cannot be undone.
-          </>
-        }
+        title={t('places.deleteTitle')}
+        confirmLabel={t('places.deleteButton')}
+        description={<>{t('places.deleteBody', { name: deleteTarget?.name ?? '' })}</>}
       />
 
       {lightbox ? (

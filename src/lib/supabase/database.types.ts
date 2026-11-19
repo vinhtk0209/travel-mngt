@@ -10,6 +10,7 @@ export type TripRole = 'owner' | 'editor' | 'viewer'
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 export type ItemStatus = 'todo' | 'completed'
 export type AssistantMode = 'basic' | 'gemini'
+export type Locale = 'en' | 'vi'
 
 export type Database = {
   public: {
@@ -20,6 +21,7 @@ export type Database = {
           email: string
           display_name: string
           avatar_url: string | null
+          locale: Locale
           created_at: string
           updated_at: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           email?: string
           display_name?: string
           avatar_url?: string | null
+          locale?: Locale
           created_at?: string
           updated_at?: string
         }
@@ -35,6 +38,7 @@ export type Database = {
           email?: string
           display_name?: string
           avatar_url?: string | null
+          locale?: Locale
           updated_at?: string
         }
         Relationships: []

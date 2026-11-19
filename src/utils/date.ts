@@ -7,6 +7,19 @@ import {
   parseISO,
   startOfDay,
 } from 'date-fns'
+import { enUS, vi as viLocale } from 'date-fns/locale'
+import type { Locale } from '@/lib/supabase/database.types'
+import { translate } from '@/i18n/translate'
+
+let activeLocale: Locale = 'en'
+
+export function setDateLocale(locale: Locale): void {
+  activeLocale = locale
+}
+
+export function getDateFnsLocale() {
+  return activeLocale === 'vi' ? viLocale : enUS
+}
 
 const safeParse = (value: string | null | undefined): Date | null => {
   if (!value) return null
@@ -20,7 +33,7 @@ export function formatDate(
   fallback = '—',
 ): string {
   const date = safeParse(value)
-  return date ? format(date, pattern) : fallback
+  return date ? format(date, pattern, { locale: getDateFnsLocale() }) : fallback
 }
 
 export function formatDateRange(
@@ -29,23 +42,24 @@ export function formatDateRange(
 ): string {
   const start = safeParse(startDate)
   const end = safeParse(endDate)
+  const locale = getDateFnsLocale()
 
-  if (!start && !end) return 'Dates to be decided'
-  if (start && !end) return format(start, 'd MMM yyyy')
-  if (!start && end) return `Until ${format(end, 'd MMM yyyy')}`
+  if (!start && !end) return translate('common.datesTbd')
+  if (start && !end) return format(start, 'd MMM yyyy', { locale })
+  if (!start && end) return translate('common.until', { date: format(end, 'd MMM yyyy', { locale }) })
 
   if (start && end) {
-    if (isSameDay(start, end)) return format(start, 'd MMM yyyy')
+    if (isSameDay(start, end)) return format(start, 'd MMM yyyy', { locale })
     const sameYear = start.getFullYear() === end.getFullYear()
     const sameMonth = sameYear && start.getMonth() === end.getMonth()
 
     if (sameMonth) {
-      return `${format(start, 'd')} – ${format(end, 'd MMM yyyy')}`
+      return `${format(start, 'd', { locale })} – ${format(end, 'd MMM yyyy', { locale })}`
     }
-    return `${format(start, sameYear ? 'd MMM' : 'd MMM yyyy')} – ${format(end, 'd MMM yyyy')}`
+    return `${format(start, sameYear ? 'd MMM' : 'd MMM yyyy', { locale })} – ${format(end, 'd MMM yyyy', { locale })}`
   }
 
-  return 'Dates to be decided'
+  return translate('common.datesTbd')
 }
 
 export type TripTiming = 'upcoming' | 'ongoing' | 'past' | 'undated'
@@ -67,13 +81,13 @@ export function getTripTiming(
 export function getTripTimingLabel(timing: TripTiming): string {
   switch (timing) {
     case 'upcoming':
-      return 'Coming up'
+      return translate('timing.upcoming')
     case 'ongoing':
-      return 'Happening now'
+      return translate('timing.ongoing')
     case 'past':
-      return 'Memory lane'
+      return translate('timing.past')
     default:
-      return 'Planning'
+      return translate('timing.planning')
   }
 }
 

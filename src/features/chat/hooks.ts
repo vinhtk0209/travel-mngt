@@ -5,6 +5,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { Tables } from '@/lib/supabase/database.types'
 import { fetchTripMessages, sendTripMessage } from './api'
 import { mergeMessages, type TripMessage } from './utils'
+import { translate } from '@/i18n/translate'
 
 export function useTripMessages(tripId: string | undefined) {
   return useQuery({
@@ -20,7 +21,7 @@ export function useSendTripMessage(tripId: string | undefined, senderId: string 
 
   return useMutation({
     mutationFn: (content: string) => {
-      if (!tripId || !senderId) throw new Error('You must be signed in')
+      if (!tripId || !senderId) throw new Error(translate('errors.authRequired'))
       return sendTripMessage({ tripId, senderId, content })
     },
     onSuccess: (message) => {

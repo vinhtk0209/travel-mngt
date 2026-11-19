@@ -8,9 +8,11 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/auth-context'
 import { formatDateRange } from '@/utils/date'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
 import { useJoinTripByShare, useResolveTripShare } from '../hooks'
 
 export function ShareTripPage() {
+  const { t } = useI18n()
   const { token } = useParams<{ token: string }>()
   const { user, isLoading: authLoading } = useAuth()
   const shareQuery = useResolveTripShare(token)
@@ -30,14 +32,14 @@ export function ShareTripPage() {
     joinTrip.mutate(undefined, {
       onSuccess: (tripId) => navigate(`/trips/${tripId}`, { replace: true }),
       onError: (error) => {
-        setJoinError(getErrorMessage(error, 'Could not join this trip'))
+        setJoinError(getErrorMessage(error, t('sharePage.joinError')))
       },
     })
   }
 
   if (shareQuery.isLoading || authLoading) {
     return (
-      <AuthShell title="Opening the invite" subtitle="Finding the trip behind this link.">
+      <AuthShell title={t('sharePage.openingTitle')} subtitle={t('sharePage.openingBody')}>
         <div className="flex justify-center py-10">
           <Spinner className="h-8 w-8" />
         </div>
@@ -48,8 +50,8 @@ export function ShareTripPage() {
   if (shareQuery.isError) {
     return (
       <AuthShell
-        title="This link could not be opened"
-        subtitle="Check the address, or ask the trip owner for a fresh link."
+        title={t('sharePage.errorTitle')}
+        subtitle={t('sharePage.errorBody')}
       >
         <div className="flex flex-col items-center gap-4 py-6 text-center">
           <span className="rounded-3xl bg-rose-100 p-4 text-rose-500">
@@ -58,7 +60,7 @@ export function ShareTripPage() {
           <p className="text-sm text-ink-soft">{getErrorMessage(shareQuery.error)}</p>
           <Link to={user ? '/dashboard' : '/login'} className="w-full">
             <Button className="w-full" size="lg">
-              {user ? 'Back to my trips' : 'Sign in'}
+              {user ? t('common.backToMyTrips') : t('common.signIn')}
             </Button>
           </Link>
         </div>
@@ -69,8 +71,8 @@ export function ShareTripPage() {
   if (!preview) {
     return (
       <AuthShell
-        title="This link is no longer active"
-        subtitle="The owner may have rotated or turned off sharing. Ask them for a new link."
+        title={t('sharePage.inactiveTitle')}
+        subtitle={t('sharePage.inactiveBody')}
       >
         <div className="flex flex-col items-center gap-4 py-6 text-center">
           <span className="rounded-3xl bg-cream p-4 text-ink-muted">
@@ -78,7 +80,7 @@ export function ShareTripPage() {
           </span>
           <Link to={user ? '/dashboard' : '/login'} className="w-full">
             <Button className="w-full" size="lg">
-              {user ? 'Back to my trips' : 'Sign in'}
+              {user ? t('common.backToMyTrips') : t('common.signIn')}
             </Button>
           </Link>
         </div>
@@ -89,18 +91,20 @@ export function ShareTripPage() {
   return (
     <AuthShell
       title={preview.name}
-      subtitle={`${preview.owner_name} shared this trip with you.`}
+      subtitle={t('sharePage.sharedBy', { name: preview.owner_name })}
     >
       <div className="space-y-5">
         <div className="flex flex-wrap gap-2">
           <Badge variant="coral" icon={<MapPin className="h-3 w-3" />}>
-            {preview.destination || 'Somewhere lovely'}
+            {preview.destination || t('common.somewhereLovely')}
           </Badge>
           <Badge variant="mint" icon={<CalendarDays className="h-3 w-3" />}>
             {formatDateRange(preview.start_date, preview.end_date)}
           </Badge>
           <Badge variant="lavender" icon={<Users className="h-3 w-3" />}>
-            {preview.member_count} {preview.member_count === 1 ? 'traveler' : 'travelers'}
+            {preview.member_count === 1
+              ? t('sharePage.travelerOne', { count: preview.member_count })
+              : t('sharePage.travelersMany', { count: preview.member_count })}
           </Badge>
         </div>
 
@@ -108,13 +112,12 @@ export function ShareTripPage() {
           <p className="text-sm leading-relaxed text-ink-soft">{preview.description}</p>
         ) : (
           <p className="text-sm leading-relaxed text-ink-soft">
-            A shared place for the plan: stops, photos, tags and the little details that make a
-            trip feel like yours.
+            {t('sharePage.fallbackBody')}
           </p>
         )}
 
         <div className="rounded-2xl border border-border/70 bg-cream/60 px-3.5 py-2.5 text-xs font-semibold text-ink-muted">
-          Joining gives you <strong className="text-ink">{preview.share_role}</strong> access.
+          {t('common.joiningGives', { role: t(`role.${preview.share_role}`) })}
         </div>
 
         {joinError ? (
@@ -130,13 +133,13 @@ export function ShareTripPage() {
         {!user ? (
           <Link to={loginPath} className="block">
             <Button className="w-full" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              Sign in to join
+              {t('sharePage.signInToJoin')}
             </Button>
           </Link>
         ) : preview.already_member ? (
           <Link to={`/trips/${preview.id}`} className="block">
             <Button className="w-full" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              Open trip
+              {t('sharePage.open')}
             </Button>
           </Link>
         ) : (
@@ -147,12 +150,12 @@ export function ShareTripPage() {
             isLoading={joinTrip.isPending}
             rightIcon={<ArrowRight className="h-4 w-4" />}
           >
-            Join this trip
+            {t('sharePage.join')}
           </Button>
         )}
 
         <p className="text-center text-[11px] text-ink-muted">
-          {user ? 'You can leave the trip later from trip settings.' : 'New to Wanderlist? You can create an account with Google or GitHub.'}
+          {user ? t('sharePage.leaveLater') : t('sharePage.newHere')}
         </p>
       </div>
     </AuthShell>

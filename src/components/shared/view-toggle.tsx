@@ -1,5 +1,6 @@
 import { LayoutGrid, List } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { useI18n } from '@/i18n/i18n-context'
 
 export type ViewMode = 'list' | 'grid'
 
@@ -10,6 +11,8 @@ type ViewToggleProps = {
 }
 
 export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
+  const { t } = useI18n()
+
   return (
     <div
       className={cn(
@@ -17,7 +20,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
         className,
       )}
       role="group"
-      aria-label="Display mode"
+      aria-label={t('view.mode')}
     >
       <button
         type="button"
@@ -27,7 +30,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
           value === 'list' ? 'bg-coral-100 text-coral-600' : 'text-ink-muted hover:text-ink',
         )}
         aria-pressed={value === 'list'}
-        aria-label="List view"
+        aria-label={t('view.list')}
       >
         <List className="h-4 w-4" />
       </button>
@@ -39,7 +42,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
           value === 'grid' ? 'bg-coral-100 text-coral-600' : 'text-ink-muted hover:text-ink',
         )}
         aria-pressed={value === 'grid'}
-        aria-label="Card view"
+        aria-label={t('view.grid')}
       >
         <LayoutGrid className="h-4 w-4" />
       </button>

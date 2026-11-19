@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { TripMemberWithProfile } from '@/features/trip-members/types'
 import { getErrorMessage } from '@/utils/errors'
+import { useI18n } from '@/i18n/i18n-context'
+import { getDateFnsLocale } from '@/utils/date'
 import { cn } from '@/utils/cn'
 import { useSendTripMessage, useTripChatRealtime, useTripMessages } from '../hooks'
 
@@ -24,6 +26,7 @@ export function TripChatSection({
   currentUserId,
   canSend,
 }: TripChatSectionProps) {
+  const { t } = useI18n()
   const messagesQuery = useTripMessages(tripId)
   const sendMessage = useSendTripMessage(tripId, currentUserId)
   useTripChatRealtime(tripId)
@@ -50,7 +53,7 @@ export function TripChatSection({
       await sendMessage.mutateAsync(content)
       setDraft('')
     } catch (sendError) {
-      setError(getErrorMessage(sendError, 'Could not send the message'))
+      setError(getErrorMessage(sendError, t('chat.sendError')))
     }
   }
 
@@ -62,15 +65,15 @@ export function TripChatSection({
             <MessageCircle className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="font-display text-lg font-extrabold">Trip chat</h2>
-            <p className="text-xs text-ink-muted">Notes, links and tiny updates for the crew.</p>
+            <h2 className="font-display text-lg font-extrabold">{t('chat.title')}</h2>
+            <p className="text-xs text-ink-muted">{t('chat.body')}</p>
           </div>
         </div>
         <Badge
           variant="mint"
           icon={<span className="h-1.5 w-1.5 rounded-full bg-mint-500" />}
         >
-          Live
+          {t('chat.live')}
         </Badge>
       </div>
 
@@ -96,9 +99,9 @@ export function TripChatSection({
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-32 flex-col items-center justify-center gap-1 text-center">
-            <p className="text-sm font-extrabold text-ink">No messages yet</p>
+            <p className="text-sm font-extrabold text-ink">{t('chat.emptyTitle')}</p>
             <p className="text-xs text-ink-muted">
-              Say hello, drop a map link, or claim the window seat.
+              {t('chat.emptyBody')}
             </p>
           </div>
         ) : (
@@ -111,7 +114,7 @@ export function TripChatSection({
                 className={cn('flex items-end gap-2', isSelf ? 'flex-row-reverse' : 'flex-row')}
               >
                 <Avatar
-                  name={sender?.profile?.display_name ?? 'Traveler'}
+                  name={sender?.profile?.display_name ?? t('common.traveler')}
                   src={resolveAvatarUrl(sender?.profile?.avatar_url, avatarUrls)}
                   size="sm"
                 />
@@ -129,9 +132,9 @@ export function TripChatSection({
                       isSelf ? 'text-white/80' : 'text-ink-muted',
                     )}
                   >
-                    <span>{isSelf ? 'You' : (sender?.profile?.display_name ?? 'Traveler')}</span>
+                    <span>{isSelf ? t('common.you') : (sender?.profile?.display_name ?? t('common.traveler'))}</span>
                     <time dateTime={message.created_at} title={new Date(message.created_at).toLocaleString()}>
-                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: getDateFnsLocale() })}
                     </time>
                   </div>
                   <p className="mt-0.5 whitespace-pre-line break-words text-sm leading-relaxed">
@@ -153,7 +156,7 @@ export function TripChatSection({
           }}
         >
           <textarea
-            aria-label="Message the trip"
+            aria-label={t('chat.messageLabel')}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
@@ -164,7 +167,7 @@ export function TripChatSection({
             }}
             rows={2}
             maxLength={2000}
-            placeholder="Write a message… (Enter to send)"
+            placeholder={t('chat.placeholder')}
             className="min-h-11 flex-1 resize-none rounded-2xl border border-border bg-white/80 px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-coral-300 focus:ring-4 focus:ring-coral-100"
           />
           <Button
@@ -172,7 +175,7 @@ export function TripChatSection({
             size="icon"
             disabled={!draft.trim() || sendMessage.isPending}
             isLoading={sendMessage.isPending}
-            aria-label="Send message"
+            aria-label={t('chat.send')}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -180,7 +183,7 @@ export function TripChatSection({
       ) : (
         <div className="mt-3 flex items-center gap-2 rounded-2xl border border-border/70 bg-cream/60 px-3.5 py-2.5 text-xs font-semibold text-ink-muted">
           <Eye className="h-4 w-4 text-sky-500" />
-          You have view-only access. Ask an editor to upgrade you if you want to join the chat.
+          {t('chat.viewOnly')}
         </div>
       )}
     </section>

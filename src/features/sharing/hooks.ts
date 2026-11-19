@@ -9,6 +9,7 @@ import {
   setTripShareRole,
 } from './api'
 import type { ShareRole } from './types'
+import { translate } from '@/i18n/translate'
 
 function useInvalidateShare(tripId: string | undefined) {
   const queryClient = useQueryClient()
@@ -23,7 +24,7 @@ export function useCreateTripShare(tripId: string | undefined) {
   const invalidate = useInvalidateShare(tripId)
   return useMutation({
     mutationFn: (role: ShareRole) => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('sharing.errors.tripMissing'))
       return getOrCreateTripShare(tripId, role)
     },
     onSuccess: invalidate,
@@ -34,7 +35,7 @@ export function useSetTripShareRole(tripId: string | undefined) {
   const invalidate = useInvalidateShare(tripId)
   return useMutation({
     mutationFn: (role: ShareRole) => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('sharing.errors.tripMissing'))
       return setTripShareRole(tripId, role)
     },
     onSuccess: invalidate,
@@ -45,7 +46,7 @@ export function useRegenerateTripShare(tripId: string | undefined) {
   const invalidate = useInvalidateShare(tripId)
   return useMutation({
     mutationFn: () => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('sharing.errors.tripMissing'))
       return regenerateTripShareToken(tripId)
     },
     onSuccess: invalidate,
@@ -56,7 +57,7 @@ export function useDisableTripShare(tripId: string | undefined) {
   const invalidate = useInvalidateShare(tripId)
   return useMutation({
     mutationFn: () => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('sharing.errors.tripMissing'))
       return disableTripShare(tripId)
     },
     onSuccess: invalidate,
@@ -77,7 +78,7 @@ export function useJoinTripByShare(token: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: () => {
-      if (!token) throw new Error('Share link is missing')
+      if (!token) throw new Error(translate('sharing.errors.tokenMissing'))
       return joinTripByShare(token)
     },
     onSuccess: (tripId) => {

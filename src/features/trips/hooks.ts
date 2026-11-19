@@ -10,6 +10,7 @@ import {
   updateTrip,
 } from './api'
 import type { TripFormValues } from './schemas'
+import { translate } from '@/i18n/translate'
 
 export function useTrips() {
   return useQuery({
@@ -54,7 +55,7 @@ export function useCreateTrip() {
 
   return useMutation({
     mutationFn: (input: { values: TripFormValues; coverFile?: File | null }) => {
-      if (!user) throw new Error('You must be signed in to create a trip')
+      if (!user) throw new Error(translate('trips.errors.signedInCreate'))
       return createTrip({ ...input, ownerId: user.id })
     },
     onSuccess: invalidate,
@@ -71,7 +72,7 @@ export function useUpdateTrip(tripId: string | undefined) {
       previousCoverPath?: string | null
       removeCover?: boolean
     }) => {
-      if (!tripId) throw new Error('Trip is missing')
+      if (!tripId) throw new Error(translate('trips.errors.tripMissing'))
       return updateTrip({ ...input, tripId })
     },
     onSuccess: invalidate,

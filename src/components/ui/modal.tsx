@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/utils/cn'
+import { useI18n } from '@/i18n/i18n-context'
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -33,6 +34,8 @@ export function Modal({
   size = 'md',
   closeOnBackdrop = true,
 }: ModalProps) {
+  const { t } = useI18n()
+
   useEffect(() => {
     if (!open) return
 
@@ -63,7 +66,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === 'string' ? title : 'Dialog'}
+        aria-label={typeof title === 'string' ? title : t('common.dialog')}
         className={cn(
           'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-4xl border border-white/70 bg-surface shadow-lift animate-pop-in sm:rounded-4xl',
           sizes[size],
@@ -80,7 +83,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             className="rounded-full p-2 text-ink-soft transition hover:bg-coral-50 hover:text-coral-600"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
           >
             <X className="h-5 w-5" />
           </button>

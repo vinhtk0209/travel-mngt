@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { translate } from '@/i18n/translate'
 import type { Profile } from '@/features/auth/api'
 import type { TripMemberWithProfile } from '@/features/trip-members/types'
 import { ROLE_ORDER } from '@/features/trip-members/types'
@@ -92,7 +93,7 @@ export async function fetchDashboardTrips(userId: string): Promise<DashboardTrip
 export async function fetchTrip(tripId: string): Promise<Trip> {
   const { data, error } = await supabase.from('trips').select('*').eq('id', tripId).maybeSingle()
   if (error) throw error
-  if (!data) throw new Error('This trip could not be found, or you no longer have access.')
+  if (!data) throw new Error(translate('trips.errors.notFound'))
   return data
 }
 
