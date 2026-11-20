@@ -196,7 +196,7 @@ export async function updateTrip(input: {
 export async function deleteTrip(tripId: string): Promise<void> {
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .select('cover_image')
+    .select('cover_image, chat_background_path')
     .eq('id', tripId)
     .maybeSingle()
 
@@ -223,7 +223,33 @@ export async function deleteTrip(tripId: string): Promise<void> {
     imagePaths = (images ?? []).map((image) => image.storage_path)
   }
 
-  const paths = [...(trip?.cover_image ? [trip.cover_image] : []), ...imagePaths]
+  const { data: messages, error: messagesError } = await supabase
+    .from('trip_messages')
+    .select('id')
+    .eq('trip_id', tripId)
+
+  if (messagesError) throw messagesError
+
+  let attachmentPaths: string[] = []
+  if (messages && messages.length > 0) {
+    const { data: attachments, error: attachmentsError } = await supabase
+      .from('trip_message_attachments')
+      .select('storage_path')
+      .in(
+        'message_id',
+        messages.map((message) => message.id),
+      )
+
+    if (attachmentsError) throw attachmentsError
+    attachmentPaths = (attachments ?? []).map((attachment) => attachment.storage_path)
+  }
+
+  const paths = [
+    ...(trip?.cover_image ? [trip.cover_image] : []),
+    ...(trip?.chat_background_path ? [trip.chat_background_path] : []),
+    ...imagePaths,
+    ...attachmentPaths,
+  ]
   if (paths.length > 0) {
     try {
       await removeStoredImages(paths)

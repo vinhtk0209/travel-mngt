@@ -11,6 +11,9 @@ import { loginAs } from './support/ui'
 
 const SCREENSHOTS = join(process.cwd(), 'evidence', 'chat')
 
+const MEME_FIXTURE = join(process.cwd(), 'e2e', 'fixtures', 'meme.gif')
+const WALLPAPER_FIXTURE = join(process.cwd(), 'e2e', 'fixtures', 'wallpaper.png')
+
 async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: join(SCREENSHOTS, name), fullPage: true })
 }
@@ -78,13 +81,56 @@ test.describe.serial('trip chat', () => {
     await expect(page.getByText('Bring the good camera')).toHaveCount(1)
   })
 
-  test('viewers can read the chat but not post', async ({ page }) => {
+  test('editors react, attach a GIF, and change the wallpaper', async ({ page }) => {
+    await loginAs(page, owner, tripPath)
+    await expect(page.getByText('Meet at the river walk at 7?')).toBeVisible()
+
+    const firstMessage = page
+      .locator('[data-chat-message]')
+      .filter({ hasText: 'Meet at the river walk at 7?' })
+    await firstMessage.getByRole('button', { name: 'Reactions' }).click()
+    await firstMessage.getByRole('button', { name: 'React with ❤️' }).click()
+    await expect(firstMessage.getByRole('button', { name: 'React with ❤️' })).toContainText('1')
+
+    await page.getByLabel('Attach a photo or GIF').setInputFiles(MEME_FIXTURE)
+    await expect(page.getByAltText('Attachment preview')).toBeVisible()
+    await chatInput(page).fill('Meme drop')
+    await page.getByRole('button', { name: 'Send message' }).click()
+    await expect(page.getByAltText('meme.gif')).toBeVisible({ timeout: 30_000 })
+    await shot(page, '04-chat-reaction-and-meme.png')
+
+    await page.getByRole('button', { name: 'Chat wallpaper' }).click()
+    const wallpaperDialog = page.getByRole('dialog', { name: 'Chat wallpaper' })
+    await expect(wallpaperDialog).toBeVisible()
+    await wallpaperDialog.getByRole('button', { name: 'Sunset', exact: true }).click()
+    await expect(wallpaperDialog).toBeHidden({ timeout: 20_000 })
+    await expect(page.getByTestId('trip-chat-scroll')).toHaveCSS(
+      'background-image',
+      /linear-gradient/,
+    )
+
+    await page.getByRole('button', { name: 'Chat wallpaper' }).click()
+    await wallpaperDialog.getByLabel('Upload photo').setInputFiles(WALLPAPER_FIXTURE)
+    await expect(wallpaperDialog).toBeHidden({ timeout: 30_000 })
+    await expect(page.getByTestId('trip-chat-scroll')).toHaveCSS('background-image', /url\(/)
+    await shot(page, '05-chat-custom-wallpaper.png')
+  })
+
+  test('viewers can read chat media but cannot post or react', async ({ page }) => {
     await loginAs(page, viewer, tripPath)
     await expect(page.getByRole('heading', { name: 'Trip chat' })).toBeVisible()
     await expect(page.getByText('Meet at the river walk at 7?')).toBeVisible()
     await expect(page.getByText('Bring the good camera')).toBeVisible()
+    await expect(page.getByAltText('meme.gif')).toBeVisible()
+    await expect(
+      page
+        .locator('[data-chat-message]')
+        .filter({ hasText: 'Meet at the river walk at 7?' })
+        .getByRole('button', { name: 'React with ❤️' }),
+    ).toContainText('1')
     await expect(chatInput(page)).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Chat wallpaper' })).toHaveCount(0)
     await expect(page.getByText(/view-only access/)).toBeVisible()
-    await shot(page, '04-chat-viewer-read-only.png')
+    await shot(page, '06-chat-viewer-read-only.png')
   })
 })

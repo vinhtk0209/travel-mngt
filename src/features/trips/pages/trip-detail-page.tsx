@@ -167,6 +167,8 @@ export function TripDetailPage() {
             members={members}
             currentUserId={user?.id}
             canSend={permissions.canEdit}
+            chatBackground={trip.chat_background}
+            chatBackgroundPath={trip.chat_background_path}
           />
         </div>
       )}

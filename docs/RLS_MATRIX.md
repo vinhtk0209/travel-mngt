@@ -27,11 +27,13 @@ Legend: `M` = member, `O` = owner, `E` = owner or editor, `I` = authenticated in
 | `tags` | M | E | E | E |
 | `trip_item_tags` | M (via item) | E (via item) | — | E (via item) |
 | `trip_item_images` | M (via item) | E (via item) | — | E (via item) |
-| `trip_messages` | M | E (`sender_id = auth.uid()`) | — | — |
+| `trip_messages` | M | E (`sender_id = auth.uid()`) | — | E (own message) |
+| `trip_message_attachments` | M (via message) | E (message sender) | — | — (message cascade) |
+| `trip_message_reactions` | M (via message) | E | E (own reaction) | E (own reaction) |
 
 ## Storage (`trip-images`, private bucket)
 
-Object path convention: `<trip_id>/<item_id or "cover">/<uuid>.<ext>`.
+Object path convention: `<trip_id>/<item_id, "cover", "chat" or "chat-background">/<uuid>.<ext>`.
 
 | Operation | Policy |
 | --- | --- |

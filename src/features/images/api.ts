@@ -34,7 +34,7 @@ export async function uploadImage(options: {
   tripId: string
   folder: string
   file: File
-}): Promise<{ path: string; fileName: string }> {
+}): Promise<{ path: string; fileName: string; mimeType: string }> {
   const invalid = validateImageFile(options.file)
   if (invalid) throw new Error(invalid)
 
@@ -57,7 +57,7 @@ export async function uploadImage(options: {
 
   if (error) throw describeUploadError(error)
 
-  return { path, fileName: options.file.name }
+  return { path, fileName: options.file.name, mimeType: compressed.type }
 }
 
 export async function removeStoredImages(paths: string[]): Promise<void> {

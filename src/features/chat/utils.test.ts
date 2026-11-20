@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { mergeMessages, type TripMessage } from './utils'
+import {
+  findUserReaction,
+  mergeMessages,
+  summarizeReactions,
+  type TripMessage,
+  type TripMessageReaction,
+} from './utils'
 
 function message(id: string, createdAt: string, content = `message ${id}`): TripMessage {
   return {
@@ -10,6 +16,42 @@ function message(id: string, createdAt: string, content = `message ${id}`): Trip
     created_at: createdAt,
   }
 }
+
+function reaction(
+  messageId: string,
+  userId: string,
+  emoji: string,
+): TripMessageReaction {
+  return {
+    message_id: messageId,
+    user_id: userId,
+    emoji,
+    created_at: '2026-01-01T10:00:00.000Z',
+  }
+}
+
+describe('reactions', () => {
+  it('groups reactions and marks the current user', () => {
+    const summary = summarizeReactions(
+      [
+        reaction('m1', 'me', '❤️'),
+        reaction('m1', 'friend', '❤️'),
+        reaction('m1', 'friend-2', '😂'),
+      ],
+      'me',
+    )
+
+    expect(summary).toEqual([
+      { emoji: '❤️', count: 2, reactedByMe: true },
+      { emoji: '😂', count: 1, reactedByMe: false },
+    ])
+  })
+
+  it('finds the current user reaction', () => {
+    expect(findUserReaction([reaction('m1', 'me', '🎉')], 'me')).toBe('🎉')
+    expect(findUserReaction([reaction('m1', 'friend', '🎉')], 'me')).toBeUndefined()
+  })
+})
 
 describe('mergeMessages', () => {
   it('deduplicates messages that arrive twice', () => {

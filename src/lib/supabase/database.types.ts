@@ -10,6 +10,7 @@ export type TripRole = 'owner' | 'editor' | 'viewer'
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 export type ItemStatus = 'todo' | 'completed'
 export type AssistantMode = 'basic' | 'gemini'
+export type ChatBackground = 'default' | 'sunset' | 'mint' | 'lavender'
 export type Locale = 'en' | 'vi'
 
 export type Database = {
@@ -54,6 +55,8 @@ export type Database = {
           cover_image: string | null
           owner_id: string
           assistant_mode: AssistantMode
+          chat_background: ChatBackground
+          chat_background_path: string | null
           share_token: string | null
           share_role: TripRole
           created_at: string
@@ -69,6 +72,8 @@ export type Database = {
           cover_image?: string | null
           owner_id: string
           assistant_mode?: AssistantMode
+          chat_background?: ChatBackground
+          chat_background_path?: string | null
           share_token?: string | null
           share_role?: TripRole
           created_at?: string
@@ -83,6 +88,8 @@ export type Database = {
           cover_image?: string | null
           owner_id?: string
           assistant_mode?: AssistantMode
+          chat_background?: ChatBackground
+          chat_background_path?: string | null
           share_token?: string | null
           share_role?: TripRole
           updated_at?: string
@@ -181,6 +188,47 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+        }
+        Relationships: []
+      }
+      trip_message_attachments: {
+        Row: {
+          id: string
+          message_id: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          storage_path: string
+          file_name?: string
+          mime_type: string
+          created_at?: string
+        }
+        Update: {
+          file_name?: string
+          mime_type?: string
+        }
+        Relationships: []
+      }
+      trip_message_reactions: {
+        Row: {
+          message_id: string
+          user_id: string
+          emoji: string
+          created_at: string
+        }
+        Insert: {
+          message_id: string
+          user_id: string
+          emoji: string
+          created_at?: string
+        }
+        Update: {
+          emoji?: string
         }
         Relationships: []
       }
