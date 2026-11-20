@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns'
-import { Heart, ImagePlus, MessageCircle, MoreHorizontal, Pin, Send, Trash2, X } from 'lucide-react'
+import { ChevronDown, Heart, ImagePlus, Link2, MessageCircle, MoreHorizontal, Pin, Send, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -94,11 +94,15 @@ export function TripFeedSection({ tripId, members, userId, isOwner }: {
           <input type="file" accept={IMAGE_ACCEPT} multiple className="sr-only" aria-label={t('feed.photos')}
             onChange={(event) => { addFiles(event.target.files); event.target.value = '' }} />
         </label>
+        <label className="relative inline-flex min-w-0 max-w-56 items-center">
+        <Link2 className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-ink-muted" />
         <select value={tripItemId} onChange={(event) => setTripItemId(event.target.value)}
-          aria-label={t('feed.linkPlace')} className="min-w-0 max-w-56 rounded-full border border-border bg-surface px-3 py-2 text-xs text-ink">
+          aria-label={t('feed.linkPlace')} className="min-w-0 max-w-56 appearance-none rounded-full border border-border bg-surface py-2 pl-8 pr-8 text-xs text-ink">
           <option value="">{t('feed.noPlace')}</option>
           {places.map((place) => <option key={place.id} value={place.id}>{place.name}</option>)}
         </select>
+        <ChevronDown className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-ink-muted" />
+        </label>
         <Button size="sm" className="ml-auto" onClick={() => void create()}
           disabled={(!content.trim() && !files.length) || !userId} isLoading={actions.create.isPending}>
           <Send className="h-4 w-4" />{t('feed.publish')}

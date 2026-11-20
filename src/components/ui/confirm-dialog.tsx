@@ -52,9 +52,9 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div className="flex gap-3 rounded-2xl bg-rose-50/70 p-4 text-sm text-ink-soft">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
-        <div>{description}</div>
+      <div className="flex gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 p-4 text-sm leading-relaxed text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/50 dark:text-rose-100">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-300" />
+        <div className="min-w-0">{description}</div>
       </div>
     </Modal>
   )

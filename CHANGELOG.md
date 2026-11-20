@@ -8,6 +8,14 @@ in Git. The tag message is a short summary; this file is the detailed record.
 
 Nothing yet.
 
+## [0.5.1] - 2026-11-20
+
+### Fixed
+
+- Improved dark-mode contrast in trip-settings confirmation dialogs.
+- Removed the duplicate dropdown arrow from the trip-feed place selector.
+- Added a clearer place-link control for trip-feed posts.
+
 ## [0.5.0] - 2026-11-20
 
 ### Added
