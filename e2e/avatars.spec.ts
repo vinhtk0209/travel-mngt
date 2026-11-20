@@ -41,6 +41,7 @@ test.describe.serial('profile avatars', () => {
     await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible()
 
     await page.getByLabel('Choose an avatar photo').setInputFiles(AVATAR_SOURCE)
+    await page.getByRole('dialog', { name: 'Crop your avatar' }).getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText('Avatar updated')).toBeVisible({ timeout: 30_000 })
 
     const avatarImage = page.locator(`span[aria-label="${owner.displayName}"] img`).first()

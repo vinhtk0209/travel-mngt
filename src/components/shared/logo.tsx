@@ -5,11 +5,12 @@ import { cn } from '@/utils/cn'
 
 type LogoProps = {
   compact?: boolean
+  responsive?: boolean
   className?: string
   to?: string
 }
 
-export function Logo({ compact = false, className, to = '/dashboard' }: LogoProps) {
+export function Logo({ compact = false, responsive = false, className, to = '/dashboard' }: LogoProps) {
   const { t } = useI18n()
 
   return (
@@ -23,7 +24,7 @@ export function Logo({ compact = false, className, to = '/dashboard' }: LogoProp
         <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-cream bg-mint-400" />
       </span>
       {!compact ? (
-        <span className="font-display text-xl font-extrabold tracking-tight text-ink">
+        <span className={cn('font-display text-xl font-extrabold tracking-tight text-ink', responsive && 'hidden min-[420px]:inline')}>
           Wanderlist
         </span>
       ) : null}

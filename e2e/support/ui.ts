@@ -59,7 +59,7 @@ export async function registerViaUi(
 }
 
 export async function signOutViaUi(page: Page): Promise<void> {
-  await page.locator('header button[aria-haspopup="menu"]').click()
+  await page.locator('header button[aria-haspopup="menu"]:not([aria-label])').click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
   await page.waitForURL((url) => url.pathname === '/login', { timeout: 20_000 })
 }

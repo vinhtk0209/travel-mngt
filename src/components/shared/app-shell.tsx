@@ -2,6 +2,7 @@ import { Compass } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useI18n } from '@/i18n/i18n-context'
+import { NotificationMenu } from '@/features/notifications/components/notification-menu'
 import { LanguageToggle } from './language-toggle'
 import { Logo } from './logo'
 import { ThemeToggle } from './theme-toggle'
@@ -15,7 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-white/50 bg-cream/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-6">
-            <Logo />
+            <Logo responsive />
             <nav className="hidden items-center gap-1 sm:flex">
               <NavLink
                 to="/dashboard"
@@ -34,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-1.5">
             <LanguageToggle />
+            <NotificationMenu />
             <ThemeToggle />
             <UserMenu />
           </div>

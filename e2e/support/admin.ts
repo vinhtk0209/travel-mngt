@@ -186,6 +186,12 @@ export async function getTripMemberRole(tripId: string, userId: string): Promise
   return row?.role ?? null
 }
 
+export async function getMessageMentions(messageId: string): Promise<string[]> {
+  const { data, error } = await admin().from('trip_message_mentions').select('user_id').eq('message_id', messageId)
+  if (error) throw new Error(`Could not read mentions: ${error.message}`)
+  return (data ?? []).map((row: { user_id: string }) => row.user_id)
+}
+
 export async function cleanupTestUsers(): Promise<void> {
   const client = admin()
   const perPage = 1000

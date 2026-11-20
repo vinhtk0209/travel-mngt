@@ -176,6 +176,7 @@ export type Database = {
           trip_id: string
           sender_id: string
           content: string
+          edited_at: string | null
           created_at: string
         }
         Insert: {
@@ -183,12 +184,56 @@ export type Database = {
           trip_id: string
           sender_id: string
           content: string
+          edited_at?: string | null
           created_at?: string
         }
         Update: {
           content?: string
+          edited_at?: string | null
           created_at?: string
         }
+        Relationships: []
+      }
+      trip_chat_reads: {
+        Row: { trip_id: string; user_id: string; last_read_at: string; notifications_enabled: boolean }
+        Insert: { trip_id: string; user_id: string; last_read_at?: string; notifications_enabled?: boolean }
+        Update: { last_read_at?: string; notifications_enabled?: boolean }
+        Relationships: []
+      }
+      trip_message_mentions: {
+        Row: { message_id: string; user_id: string }
+        Insert: { message_id: string; user_id: string }
+        Update: { message_id?: string; user_id?: string }
+        Relationships: []
+      }
+      trip_posts: {
+        Row: { id: string; trip_id: string; author_id: string; trip_item_id: string | null; content: string; pinned: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; trip_id: string; author_id: string; trip_item_id?: string | null; content?: string; pinned?: boolean; created_at?: string; updated_at?: string }
+        Update: { trip_item_id?: string | null; content?: string; pinned?: boolean; updated_at?: string }
+        Relationships: []
+      }
+      trip_post_images: {
+        Row: { id: string; post_id: string; storage_path: string; file_name: string; sort_order: number; created_at: string }
+        Insert: { id?: string; post_id: string; storage_path: string; file_name: string; sort_order?: number; created_at?: string }
+        Update: { sort_order?: number }
+        Relationships: []
+      }
+      trip_post_reactions: {
+        Row: { post_id: string; user_id: string; emoji: string; created_at: string }
+        Insert: { post_id: string; user_id: string; emoji: string; created_at?: string }
+        Update: { emoji?: string }
+        Relationships: []
+      }
+      trip_post_comments: {
+        Row: { id: string; post_id: string; author_id: string; parent_comment_id: string | null; content: string; created_at: string; updated_at: string }
+        Insert: { id?: string; post_id: string; author_id: string; parent_comment_id?: string | null; content: string; created_at?: string; updated_at?: string }
+        Update: { content?: string; updated_at?: string }
+        Relationships: []
+      }
+      trip_notifications: {
+        Row: { id: string; trip_id: string; user_id: string; actor_id: string; source_id: string; kind: 'chat' | 'mention' | 'comment' | 'reaction'; created_at: string; read_at: string | null }
+        Insert: { id?: string; trip_id: string; user_id: string; actor_id: string; source_id: string; kind: 'chat' | 'mention' | 'comment' | 'reaction'; created_at?: string; read_at?: string | null }
+        Update: { read_at?: string | null }
         Relationships: []
       }
       trip_message_attachments: {
@@ -342,6 +387,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      send_trip_message: {
+        Args: { p_trip_id: string; p_content: string; p_mentioned_user_ids?: string[] }
+        Returns: Database['public']['Tables']['trip_messages']['Row']
+      }
+      edit_trip_message: {
+        Args: { p_message_id: string; p_content: string; p_mentioned_user_ids?: string[] }
+        Returns: Database['public']['Tables']['trip_messages']['Row']
+      }
+      mark_trip_chat_read: {
+        Args: { p_trip_id: string; p_at: string }
+        Returns: undefined
+      }
+      set_trip_chat_notifications: {
+        Args: { p_trip_id: string; p_enabled: boolean }
+        Returns: undefined
+      }
       accept_trip_invitation: {
         Args: { p_token: string }
         Returns: string

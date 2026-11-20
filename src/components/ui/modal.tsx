@@ -68,7 +68,7 @@ export function Modal({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : t('common.dialog')}
         className={cn(
-          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-4xl border border-white/70 bg-surface shadow-lift animate-pop-in sm:rounded-4xl',
+          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-4xl border border-border bg-surface text-ink shadow-lift animate-pop-in sm:rounded-4xl',
           sizes[size],
         )}
       >

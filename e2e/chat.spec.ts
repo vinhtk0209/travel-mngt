@@ -46,7 +46,7 @@ test.describe.serial('trip chat', () => {
     })
     await addTripMember(tripId, buddy, 'editor')
     await addTripMember(tripId, viewer, 'viewer')
-    tripPath = `/trips/${tripId}`
+    tripPath = `/trips/${tripId}?tab=chat`
   })
 
   test('members send messages and receive them live', async ({ page, browser }) => {
@@ -116,7 +116,7 @@ test.describe.serial('trip chat', () => {
     await shot(page, '05-chat-custom-wallpaper.png')
   })
 
-  test('viewers can read chat media but cannot post or react', async ({ page }) => {
+  test('viewers can read chat media and participate', async ({ page }) => {
     await loginAs(page, viewer, tripPath)
     await expect(page.getByRole('heading', { name: 'Trip chat' })).toBeVisible()
     await expect(page.getByText('Meet at the river walk at 7?')).toBeVisible()
@@ -128,9 +128,11 @@ test.describe.serial('trip chat', () => {
         .filter({ hasText: 'Meet at the river walk at 7?' })
         .getByRole('button', { name: 'React with ❤️' }),
     ).toContainText('1')
-    await expect(chatInput(page)).toHaveCount(0)
+    await expect(chatInput(page)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Chat wallpaper' })).toHaveCount(0)
-    await expect(page.getByText(/view-only access/)).toBeVisible()
-    await shot(page, '06-chat-viewer-read-only.png')
+    await chatInput(page).fill('Viewer joined the conversation')
+    await page.getByRole('button', { name: 'Send message' }).click()
+    await expect(page.getByText('Viewer joined the conversation')).toBeVisible()
+    await shot(page, '06-chat-viewer-participating.png')
   })
 })

@@ -1,37 +1,38 @@
-import { ChevronDown, Languages } from 'lucide-react'
+import { Languages } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '@/i18n/i18n-context'
 import type { Locale } from '@/lib/supabase/database.types'
 import { cn } from '@/utils/cn'
 
 export function LanguageToggle({ className }: { className?: string }) {
   const { locale, setLocale, t } = useI18n()
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
 
-  return (
-    <label
-      className={cn(
-        'group relative inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border border-transparent pl-2.5 pr-2 text-ink-soft transition hover:border-border hover:bg-white/70 focus-within:border-coral-300 focus-within:bg-white/80',
-        className,
-      )}
-      title={t('nav.language')}
-    >
-      <Languages className="h-4 w-4 shrink-0" aria-hidden="true" />
-      <span className="hidden text-xs font-bold sm:inline">
-        {locale === 'en' ? t('nav.languageEn') : t('nav.languageVi')}
-      </span>
-      <span className="text-xs font-bold sm:hidden">{locale.toUpperCase()}</span>
-      <ChevronDown
-        className="h-3.5 w-3.5 shrink-0 text-ink-muted transition group-hover:text-ink-soft"
-        aria-hidden="true"
-      />
-      <select
-        value={locale}
-        onChange={(event) => setLocale(event.target.value as Locale)}
-        aria-label={t('nav.language')}
-        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0 focus-visible:outline-none"
-      >
-        <option value="en">{t('nav.languageEn')}</option>
-        <option value="vi">{t('nav.languageVi')}</option>
-      </select>
-    </label>
-  )
+  useEffect(() => {
+    if (!open) return
+    const close = (event: MouseEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false) }
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', escape)
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', escape) }
+  }, [open])
+
+  const choose = (next: Locale) => { setLocale(next); setOpen(false) }
+
+  return <div ref={root} className={cn('relative shrink-0', className)}>
+    <button type="button" onClick={() => setOpen((value) => !value)} aria-label={t('nav.language')}
+      aria-haspopup="menu" aria-expanded={open} title={t('nav.language')}
+      className="inline-flex h-10 items-center gap-1 rounded-full px-2 text-xs font-bold text-ink-soft hover:bg-surface">
+      <Languages className="h-4 w-4" aria-hidden="true" />
+      <span>{locale.toUpperCase()}</span>
+    </button>
+    {open ? <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-40 rounded-2xl border border-border bg-surface p-1 shadow-lift">
+      {(['en', 'vi'] as const).map((option) => <button key={option} type="button" role="menuitemradio"
+        aria-checked={locale === option} onClick={() => choose(option)}
+        className={cn('block w-full rounded-xl px-3 py-2 text-left text-sm text-ink hover:bg-cream', locale === option && 'bg-coral-50 font-bold text-coral-700')}>
+        {option === 'en' ? t('nav.languageEn') : t('nav.languageVi')}
+      </button>)}
+    </div> : null}
+  </div>
 }

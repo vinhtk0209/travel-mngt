@@ -1,4 +1,4 @@
-import { AlertCircle, Eye, ImagePlus, MessageCircle, Send, Smile, X } from 'lucide-react'
+import { AlertCircle, Bell, BellOff, Eye, ImagePlus, MessageCircle, Send, Smile, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { resolveAvatarUrl } from '@/features/avatars/api'
 import { useAvatarUrls } from '@/features/avatars/hooks'
@@ -14,21 +14,28 @@ import { cn } from '@/utils/cn'
 import { getChatBackgroundStyle } from '../background'
 import {
   useSendTripMessage,
+  useEditTripMessage,
+  useMarkTripChatRead,
+  useSetTripChatNotifications,
+  useTripChatReads,
   useToggleTripMessageReaction,
   useTripChatRealtime,
   useTripMessageAttachments,
   useTripMessageReactions,
+  useTripMessageMentions,
   useTripMessages,
 } from '../hooks'
 import type { TripMessageReaction } from '../utils'
 import { ChatBackgroundPicker } from './chat-background-picker'
 import { ChatMessage } from './chat-message'
+import { useTripTyping } from '../typing'
 
 type TripChatSectionProps = {
   tripId: string
   members: TripMemberWithProfile[]
   currentUserId: string | undefined
   canSend: boolean
+  canCustomize: boolean
   chatBackground: ChatBackground
   chatBackgroundPath: string | null
 }
@@ -65,6 +72,7 @@ export function TripChatSection({
   members,
   currentUserId,
   canSend,
+  canCustomize,
   chatBackground,
   chatBackgroundPath,
 }: TripChatSectionProps) {
@@ -74,20 +82,36 @@ export function TripChatSection({
   const messageIds = useMemo(() => messages.map((message) => message.id), [messages])
   const attachmentsQuery = useTripMessageAttachments(tripId, messageIds)
   const reactionsQuery = useTripMessageReactions(tripId, messageIds)
+  const mentionsQuery = useTripMessageMentions(tripId, messageIds)
   const sendMessage = useSendTripMessage(tripId, currentUserId)
+  const editMessage = useEditTripMessage(tripId)
+  const readsQuery = useTripChatReads(tripId)
+  const markRead = useMarkTripChatRead(tripId, currentUserId)
+  const notifications = useSetTripChatNotifications(tripId, currentUserId)
+  const { typingIds, signalTyping, stopTyping } = useTripTyping(tripId, currentUserId)
   const toggleReaction = useToggleTripMessageReaction(tripId, currentUserId)
   useTripChatRealtime(tripId)
 
   const [draft, setDraft] = useState('')
+  const [selectedMentions, setSelectedMentions] = useState<{ id: string; label: string }[]>([])
   const [file, setFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [emojiOpen, setEmojiOpen] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const lastMarkedRef = useRef('')
 
   const avatarUrls = useAvatarUrls(members.map((member) => member.profile?.avatar_url))
   const memberById = new Map(members.map((member) => [member.user_id, member]))
+  const mentionCandidates = [{ id: 'all', label: 'all' }, ...members
+    .filter((member) => member.user_id !== currentUserId)
+    .map((member) => ({ id: member.user_id, label: member.profile?.display_name ?? t('common.traveler') }))]
+  const myRead = (readsQuery.data ?? []).find((read) => read.user_id === currentUserId)
+  const mentionMatch = draft.match(/(?:^|\s)@([^\s@]*)$/)
+  const mentionOptions = mentionMatch
+    ? mentionCandidates.filter((option) => option.label.toLowerCase().includes(mentionMatch[1].toLowerCase()))
+    : []
   const attachmentByMessage = new Map(
     (attachmentsQuery.data ?? []).map((attachment) => [attachment.message_id, attachment]),
   )
@@ -123,13 +147,38 @@ export function TripChatSection({
     list.scrollTop = list.scrollHeight
   }, [messages.length, attachmentsQuery.data?.length])
 
+  useEffect(() => {
+    const root = listRef.current
+    if (!root || !currentUserId || messages.length === 0) return
+    const byId = new Map(messages.map((message) => [message.id, message]))
+    const observer = new IntersectionObserver((entries) => {
+      if (document.visibilityState !== 'visible') return
+      const visible = entries.filter((entry) => entry.isIntersecting)
+        .map((entry) => byId.get((entry.target as HTMLElement).dataset.chatMessage ?? ''))
+        .filter((message): message is (typeof messages)[number] => Boolean(message))
+      const newest = visible.sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+      if (newest && newest.created_at > lastMarkedRef.current) {
+        lastMarkedRef.current = newest.created_at
+        markRead.mutate(newest.created_at)
+      }
+    }, { root, threshold: 0.5 })
+    root.querySelectorAll('[data-chat-message]').forEach((node) => observer.observe(node))
+    return () => observer.disconnect()
+  }, [messages, currentUserId, markRead.mutate])
+
   const submit = async () => {
     const content = draft.trim()
     if ((!content && !file) || sendMessage.isPending) return
     setError(null)
     try {
-      await sendMessage.mutateAsync({ content, file })
+      const mentionIds = selectedMentions.filter((item) => content.includes(`@${item.label}`))
+        .flatMap((item) => item.id === 'all'
+          ? members.filter((member) => member.user_id !== currentUserId).map((member) => member.user_id)
+          : [item.id])
+      await sendMessage.mutateAsync({ content, file, mentionIds })
+      stopTyping()
       setDraft('')
+      setSelectedMentions([])
       setFile(null)
       setEmojiOpen(false)
     } catch (sendError) {
@@ -163,6 +212,14 @@ export function TripChatSection({
     textareaRef.current?.focus()
   }
 
+  const selectMention = (option: { id: string; label: string }) => {
+    setDraft((current) => current.replace(/@[^\s@]*$/, `@${option.label} `))
+    setSelectedMentions((current) => [...current.filter((item) => item.id !== option.id), option])
+    textareaRef.current?.focus()
+  }
+
+  const typingNames = typingIds.map((id) => memberById.get(id)?.profile?.display_name ?? t('common.traveler'))
+
   return (
     <section className="surface-card p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -176,13 +233,21 @@ export function TripChatSection({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {canSend ? (
+          {canCustomize ? (
             <ChatBackgroundPicker
               tripId={tripId}
               currentPreset={chatBackground}
               currentPath={chatBackgroundPath}
               hasImage={Boolean(chatBackgroundPath)}
             />
+          ) : null}
+          {canSend ? (
+            <button type="button" onClick={() => notifications.mutate(!(myRead?.notifications_enabled ?? true))}
+              aria-label={t(myRead?.notifications_enabled === false ? 'chat.notificationsOff' : 'chat.notificationsOn')}
+              title={t(myRead?.notifications_enabled === false ? 'chat.notificationsOff' : 'chat.notificationsOn')}
+              className="rounded-full p-2 text-ink-muted hover:bg-cream">
+              {myRead?.notifications_enabled === false ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            </button>
           ) : null}
           <Badge
             variant="mint"
@@ -241,12 +306,22 @@ export function TripChatSection({
                 currentUserId={currentUserId}
                 reactions={reactionByMessage.get(message.id) ?? []}
                 canReact={canSend}
+                readers={(readsQuery.data ?? []).filter((read) => read.user_id !== message.sender_id && read.last_read_at >= message.created_at)
+                  .map((read) => memberById.get(read.user_id)?.profile?.display_name ?? t('common.traveler'))}
+                mentionCandidates={mentionCandidates}
+                mentionedUserIds={(mentionsQuery.data ?? []).filter((mention) => mention.message_id === message.id).map((mention) => mention.user_id)}
+                onEdit={message.sender_id === currentUserId ? async ({ messageId, content, mentionIds }) => {
+                  try { await editMessage.mutateAsync({ messageId, content, mentionIds }) }
+                  catch (editError) { setError(getErrorMessage(editError, t('chat.sendError'))); throw editError }
+                } : undefined}
                 onReact={react}
               />
             )
           })
         )}
       </div>
+
+      {typingNames.length > 0 ? <p role="status" className="mt-2 text-xs text-ink-muted">{t('chat.typing', { names: typingNames.join(', ') })}</p> : null}
 
       {canSend ? (
         <form
@@ -284,7 +359,15 @@ export function TripChatSection({
             </div>
           ) : null}
 
-          <div className="flex items-end gap-2">
+          <div className="relative flex items-end gap-2">
+            {mentionOptions.length > 0 ? (
+              <div role="listbox" aria-label={t('chat.mentionHint')} className="absolute bottom-full left-10 z-20 mb-2 max-h-44 w-56 overflow-y-auto rounded-2xl border border-border bg-surface p-1 shadow-lift">
+                {mentionOptions.map((option) => <button key={option.id} type="button" role="option" aria-selected="false"
+                  onClick={() => selectMention(option)} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-cream">
+                  @{option.label}{option.id === 'all' ? ` · ${t('chat.mentionEveryone')}` : ''}
+                </button>)}
+              </div>
+            ) : null}
             <div className="relative">
               <Button
                 type="button"
@@ -320,7 +403,7 @@ export function TripChatSection({
               ref={textareaRef}
               aria-label={t('chat.messageLabel')}
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => { setDraft(event.target.value); signalTyping() }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault()

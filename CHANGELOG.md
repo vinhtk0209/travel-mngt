@@ -8,6 +8,32 @@ in Git. The tag message is a short summary; this file is the detailed record.
 
 Nothing yet.
 
+## [0.5.0] - 2026-11-20
+
+### Added
+
+- Trip chat typing indicators, read receipts, member mentions including `@all`, message editing, and in-app/browser notifications with per-trip mute controls.
+- Private trip feed with photo and status posts, reactions, comments, replies, pinning, and owner moderation.
+- Profile avatar view, crop/change, and remove actions; celebratory styling at 100% trip progress.
+- Read-only cached repository MCP knowledge index and feature delivery workflow documentation.
+
+### Fixed
+
+- Dark-mode trip-settings dialogs and the mobile language selector layout.
+- Chat message and mention recipients now commit in one transaction. Failed attachment cleanup removes the message and its notifications.
+- E2E coverage for current social login, chat tabs, assistant fallback, i18n, and viewer permissions.
+
+### Backend / deployment
+
+- Eight additive collaboration migrations (`20261120000000` through `20261120007000`) add chat state, mentions, the trip feed, notifications, transactional send/edit RPCs, and RLS guards. Applied to the linked `travel-mngt` production project before the frontend release.
+- No Edge Function changes are required for this version. Frontend rollback to `v0.4.0` leaves the additive schema in place.
+
+### Verification
+
+- `npm run release:verify` — app and E2E typechecks, 49 unit tests, 1 MCP cache test, production build pass.
+- `npm run test:e2e` — 33/33 Playwright tests pass against local Supabase; screenshots and testcase matrix are in `evidence/backlog/VERIFICATION.md`.
+- Remote migration dry-run reports no pending migrations.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

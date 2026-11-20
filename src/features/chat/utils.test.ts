@@ -13,6 +13,7 @@ function message(id: string, createdAt: string, content = `message ${id}`): Trip
     trip_id: 'trip-1',
     sender_id: 'user-1',
     content,
+    edited_at: null,
     created_at: createdAt,
   }
 }

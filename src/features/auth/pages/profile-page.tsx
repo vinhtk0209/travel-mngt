@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera, LogOut, Mail, Save, Trash2 } from 'lucide-react'
+import { Camera, Eye, LogOut, Mail, Save, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { AppShell } from '@/components/shared/app-shell'
 import { Avatar } from '@/components/ui/avatar'
 import { resolveAvatarUrl } from '@/features/avatars/api'
 import { useAvatarUrls, useRemoveAvatar, useUploadAvatar } from '@/features/avatars/hooks'
+import { AvatarCropModal } from '@/features/avatars/components/avatar-crop-modal'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Card } from '@/components/ui/card'
@@ -15,6 +16,7 @@ import { Field } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Modal } from '@/components/ui/modal'
 import { getErrorMessage } from '@/utils/errors'
 import { useI18n } from '@/i18n/i18n-context'
 import { useAuth } from '../auth-context'
@@ -33,6 +35,9 @@ export function ProfilePage() {
   const avatarSrc = resolveAvatarUrl(profile?.avatar_url, avatarUrls)
   const fileInput = useRef<HTMLInputElement>(null)
   const [confirmRemoveAvatar, setConfirmRemoveAvatar] = useState(false)
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
+  const [avatarViewOpen, setAvatarViewOpen] = useState(false)
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
   const {
     register,
@@ -70,6 +75,7 @@ export function ProfilePage() {
     if (!file) return
     try {
       await uploadAvatar.mutateAsync({ file, previousPath: profile?.avatar_url })
+      setCropFile(null)
       toast.success(t('profile.avatarUpdated'))
     } catch (error) {
       toast.error(getErrorMessage(error, t('profile.avatarUpdateError')))
@@ -101,7 +107,18 @@ export function ProfilePage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <Card className="flex flex-col items-center gap-4 p-7 text-center">
-          <Avatar name={displayName} src={avatarSrc} size="xl" />
+          <div className="relative">
+            <button type="button" onClick={() => setAvatarMenuOpen((open) => !open)}
+              aria-label={t('profile.avatarOptions')} aria-expanded={avatarMenuOpen}
+              className="rounded-full focus-visible:ring-2 focus-visible:ring-coral-400">
+              <Avatar name={displayName} src={avatarSrc} size="xl" />
+            </button>
+            {avatarMenuOpen ? <div className="absolute left-1/2 top-full z-20 mt-2 w-44 -translate-x-1/2 rounded-2xl border border-border bg-surface p-1 shadow-lift">
+              {avatarSrc ? <button type="button" onClick={() => { setAvatarViewOpen(true); setAvatarMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-ink hover:bg-cream"><Eye className="h-4 w-4" />{t('profile.viewPhoto')}</button> : null}
+              <button type="button" onClick={() => { fileInput.current?.click(); setAvatarMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-ink hover:bg-cream"><Camera className="h-4 w-4" />{t('profile.changePhoto')}</button>
+              {profile?.avatar_url ? <button type="button" onClick={() => { setConfirmRemoveAvatar(true); setAvatarMenuOpen(false) }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" />{t('profile.removePhoto')}</button> : null}
+            </div> : null}
+          </div>
           <div>
             <p className="font-display text-2xl font-extrabold">{displayName}</p>
             <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-ink-muted">
@@ -119,7 +136,7 @@ export function ProfilePage() {
               onChange={(event) => {
                 const file = event.target.files?.[0]
                 event.target.value = ''
-                void handleAvatarFile(file)
+                if (file) setCropFile(file)
               }}
             />
             <Button
@@ -189,6 +206,10 @@ export function ProfilePage() {
         confirmLabel={t('profile.removePhoto')}
         description={t('profile.removeAvatarBody')}
       />
+      <AvatarCropModal file={cropFile} onClose={() => setCropFile(null)} onSave={handleAvatarFile} saving={uploadAvatar.isPending} />
+      <Modal open={avatarViewOpen} onClose={() => setAvatarViewOpen(false)} title={t('profile.viewPhoto')} size="sm">
+        {avatarSrc ? <img src={avatarSrc} alt={displayName} className="mx-auto max-h-[70vh] rounded-2xl object-contain" /> : null}
+      </Modal>
     </AppShell>
   )
 }

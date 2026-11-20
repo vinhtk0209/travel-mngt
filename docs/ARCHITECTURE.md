@@ -85,6 +85,10 @@ UI primitives never import features; features may import UI/shared.
 
 Realtime is used as a **cache invalidation signal**, not a state store. PostgreSQL remains the source of truth.
 
+Trip chat uses a private Realtime Broadcast channel for throttled, ephemeral typing signals. PostgreSQL stores messages, mentions, read positions, and notification preferences. RLS protects tables and the Broadcast topic. `send_trip_message` commits a message and its mention recipients together. Authors may edit chat messages for 15 minutes through `edit_trip_message`, which updates content and mention recipients in one transaction; a trigger stamps `edited_at` and rejects identity changes. Authors can delete a new message during that window to clean up a failed attachment upload; a delete trigger also removes its chat notifications. The message list loads the newest 200 rows and displays them in chronological order.
+
+The trip feed uses `trip_posts`, `trip_post_images`, `trip_post_reactions`, and `trip_post_comments`. Every member may post and react. Authors edit their own content; the owner may remove content and pin posts. Images use private `trip-images` paths under `<trip_id>/posts/`. Database triggers create `trip_notifications` for relevant activity, visible only to their recipient. The UI uses `?tab=plans|feed|chat` so notifications deep-link to the right section.
+
 ## 5. Data access strategy
 
 - Base tables are queried with `select('*')` against a hand-written, generated-style `Database` type.
@@ -207,7 +211,7 @@ erDiagram
 
 - `trip_members` unique `(trip_id, user_id)`; exactly one `owner` per trip (partial unique index).
 - `trips.share_token` is nullable and unique; clearing or rotating it revokes the old link.
-- `trip_invitations` is retained for legacy rows but email invitations are no longer created.
+- `trip_invitations` is written only by the `invite-member` Edge Function. It sends email when Resend secrets are configured and otherwise returns a seven-day invite link. Invitation responses use SECURITY DEFINER RPCs.
 - `tags` unique `(trip_id, lower(name))`.
 - `trip_item_tags` unique `(trip_item_id, tag_id)` and a trigger guarantees the tag and item share a trip.
 - `trip_item_images` and `trip_item_tags` cascade with the item; items, tags, members, invitations cascade with the trip.
@@ -224,7 +228,8 @@ Roles: `owner` > `editor` > `viewer`.
 | --------------------------------- | :---: | :----: | :----: | :--------: |
 | View trip / places / tags / photos|   ✓   |   ✓    |   ✓    |     ✗      |
 | Read trip chat                    |   ✓   |   ✓    |   ✓    |     ✗      |
-| Send trip chat messages           |   ✓   |   ✓    |   ✗    |     ✗      |
+| Send trip chat messages           |   ✓   |   ✓    |   ✓    |     ✗      |
+| Post, react, and comment in feed  |   ✓   |   ✓    |   ✓    |     ✗      |
 | Create/edit/delete places         |   ✓   |   ✓    |   ✗    |     ✗      |
 | Reorder places                    |   ✓   |   ✓    |   ✗    |     ✗      |
 | Manage tags                       |   ✓   |   ✓    |   ✗    |     ✗      |

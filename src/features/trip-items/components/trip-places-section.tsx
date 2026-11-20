@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CheckCircle2, Eye, MapPin, Plus, Search, Sparkles, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -59,6 +59,8 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
   const [deleteTarget, setDeleteTarget] = useState<TripItemWithMeta | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<{ images: LightboxImage[]; index: number } | null>(null)
+  const [celebrating, setCelebrating] = useState(false)
+  const previousPercent = useRef(0)
 
   const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data])
   const tags = tagsQuery.data ?? []
@@ -71,6 +73,17 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
 
   const completedCount = items.filter((item) => item.status === 'completed').length
   const percent = items.length > 0 ? (completedCount / items.length) * 100 : 0
+
+  useEffect(() => {
+    if (!itemsQuery.isLoading && previousPercent.current < 100 && percent === 100
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCelebrating(true)
+      const timeout = window.setTimeout(() => setCelebrating(false), 2200)
+      previousPercent.current = percent
+      return () => window.clearTimeout(timeout)
+    }
+    previousPercent.current = percent
+  }, [percent, itemsQuery.isLoading])
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -187,7 +200,11 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
         ) : null}
       </div>
 
-      <div className="surface-card p-5">
+      <div className={`surface-card relative overflow-hidden p-5 ${percent === 100 && items.length ? 'border-mint-400 bg-mint-50/40' : ''}`}>
+        {celebrating ? <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          {Array.from({ length: 20 }, (_, index) => <span key={index} className="trip-confetti"
+            style={{ left: `${(index * 47) % 100}%`, backgroundColor: ['#ff7059', '#2fb79a', '#e3b84e', '#9876e8'][index % 4], animationDelay: `${(index % 5) * 0.08}s` }} />)}
+        </div> : null}
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral-500">
@@ -207,7 +224,7 @@ export function TripPlacesSection({ tripId, canEdit }: TripPlacesSectionProps) {
             </span>
           </div>
         </div>
-        <Progress value={percent} className="mt-3" label={t('places.progressLabel')} />
+        <Progress value={percent} className="mt-3" barClassName={percent === 100 && items.length ? 'from-mint-400 via-mint-500 to-coral-400' : undefined} label={t('places.progressLabel')} />
       </div>
 
       <div className="surface-card space-y-3 p-4 sm:p-5">

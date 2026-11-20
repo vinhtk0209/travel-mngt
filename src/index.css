@@ -199,6 +199,10 @@
   background-color: rgb(24 64 55 / 0.45);
 }
 
+.dark .bg-mint-50\/40 {
+  background-color: rgb(24 64 55 / 0.4);
+}
+
 .dark .bg-sky-50 {
   background-color: rgb(24 49 76 / 0.5);
 }
@@ -211,6 +215,43 @@
   background-color: rgb(76 38 32 / 0.5);
 }
 
+.dark .bg-coral-50\/40,
+.dark .bg-coral-50\/70 {
+  background-color: rgb(76 38 32 / 0.55);
+}
+
 .dark select {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23CEC2CC%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.dark [role='dialog'] {
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-ink));
+  border-color: rgb(var(--color-border));
+}
+
+.dark [role='dialog'] input,
+.dark [role='dialog'] textarea,
+.dark [role='dialog'] select {
+  background-color: rgb(var(--color-raised));
+  color: rgb(var(--color-ink));
+}
+
+@keyframes trip-confetti-fall {
+  0% { transform: translateY(-1rem) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(11rem) rotate(540deg); opacity: 0; }
+}
+
+.trip-confetti {
+  position: absolute;
+  top: 0;
+  width: 0.45rem;
+  height: 0.8rem;
+  border-radius: 0.1rem;
+  animation: trip-confetti-fall 1.8s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trip-confetti { animation: none; display: none; }
 }

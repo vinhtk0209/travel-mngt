@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 import type { ChatBackground } from '@/lib/supabase/database.types'
+import type { Tables } from '@/lib/supabase/database.types'
 import { uploadImage, removeStoredImages } from '@/features/images/api'
 import { translate } from '@/i18n/translate'
 import type {
@@ -13,11 +14,11 @@ export async function fetchTripMessages(tripId: string): Promise<TripMessage[]> 
     .from('trip_messages')
     .select('*')
     .eq('trip_id', tripId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(200)
 
   if (error) throw error
-  return data ?? []
+  return (data ?? []).reverse()
 }
 
 export async function fetchTripMessageAttachments(
@@ -48,6 +49,13 @@ export async function fetchTripMessageReactions(
   return data ?? []
 }
 
+export async function fetchTripMessageMentions(messageIds: string[]): Promise<Tables<'trip_message_mentions'>[]> {
+  if (messageIds.length === 0) return []
+  const { data, error } = await supabase.from('trip_message_mentions').select('*').in('message_id', messageIds)
+  if (error) throw error
+  return data ?? []
+}
+
 export type SendTripMessageResult = {
   message: TripMessage
   attachment: TripMessageAttachment | null
@@ -55,19 +63,19 @@ export type SendTripMessageResult = {
 
 export async function sendTripMessage(input: {
   tripId: string
-  senderId: string
   content: string
   file?: File | null
+  mentionIds?: string[]
 }): Promise<SendTripMessageResult> {
   const content = input.content.trim()
   if (!content && !input.file) throw new Error(translate('chat.errors.empty'))
   if (content.length > 2000) throw new Error(translate('chat.errors.tooLong'))
 
-  const { data: message, error } = await supabase
-    .from('trip_messages')
-    .insert({ trip_id: input.tripId, sender_id: input.senderId, content })
-    .select('*')
-    .single()
+  const { data: message, error } = await supabase.rpc('send_trip_message', {
+    p_trip_id: input.tripId,
+    p_content: content,
+    p_mentioned_user_ids: [...new Set(input.mentionIds ?? [])],
+  })
 
   if (error) throw error
   if (!message) throw new Error(translate('chat.errors.send'))
@@ -107,6 +115,32 @@ export async function sendTripMessage(input: {
     await supabase.from('trip_messages').delete().eq('id', message.id)
     throw uploadError
   }
+}
+
+export async function fetchTripChatReads(tripId: string): Promise<Tables<'trip_chat_reads'>[]> {
+  const { data, error } = await supabase.from('trip_chat_reads').select('*').eq('trip_id', tripId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function markTripChatRead(tripId: string, at: string) {
+  const { error } = await supabase.rpc('mark_trip_chat_read', { p_trip_id: tripId, p_at: at })
+  if (error) throw error
+}
+
+export async function setTripChatNotifications(tripId: string, enabled: boolean) {
+  const { error } = await supabase.rpc('set_trip_chat_notifications', { p_trip_id: tripId, p_enabled: enabled })
+  if (error) throw error
+}
+
+export async function editTripMessage(messageId: string, content: string, mentionIds: string[]): Promise<TripMessage> {
+  const { data, error } = await supabase.rpc('edit_trip_message', {
+    p_message_id: messageId,
+    p_content: content,
+    p_mentioned_user_ids: mentionIds,
+  })
+  if (error) throw error
+  return data
 }
 
 export async function toggleTripMessageReaction(input: {

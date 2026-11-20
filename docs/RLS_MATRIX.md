@@ -27,13 +27,31 @@ Legend: `M` = member, `O` = owner, `E` = owner or editor, `I` = authenticated in
 | `tags` | M | E | E | E |
 | `trip_item_tags` | M (via item) | E (via item) | — | E (via item) |
 | `trip_item_images` | M (via item) | E (via item) | — | E (via item) |
-| `trip_messages` | M | E (`sender_id = auth.uid()`) | — | E (own message) |
-| `trip_message_attachments` | M (via message) | E (message sender) | — | — (message cascade) |
-| `trip_message_reactions` | M (via message) | E | E (own reaction) | E (own reaction) |
+| `trip_messages` | M | M (`sender_id = auth.uid()`) | author within 15 minutes | author within 15 minutes (upload cleanup) |
+| `trip_message_attachments` | M (via message) | M (message sender) | — | — (message cascade) |
+| `trip_message_reactions` | M (via message) | M | M (own reaction) | M (own reaction) |
+
+## Collaboration additions (November 2026)
+
+| Table / channel | Read | Write |
+| --- | --- | --- |
+| `trip_messages` | trip members | any trip member inserts; author edits content within 15 minutes |
+| `trip_chat_reads` | trip members | user updates only their own read position and notification setting through RPCs |
+| `trip_message_mentions` | trip members | message author mentions current trip members within 15 minutes; edit RPC replaces recipients atomically |
+| `trip_posts` | trip members | any member posts; author edits/deletes; owner moderates and pins |
+| `trip_post_images` | trip members | post author adds images; author/owner removes |
+| `trip_post_reactions` | trip members | member changes their own emoji; trigger prevents moving a reaction to another post |
+| `trip_post_comments` | trip members | member comments; author edits; author/owner deletes |
+| `trip_notifications` | recipient and current trip member | database triggers create; recipient marks read |
+| `trip-typing-<trip_id>` private Broadcast | trip members | trip members send ephemeral typing signals |
+
+Private `trip-images` paths in `chat/` and `posts/` allow member uploads and deletion of their own objects. Existing editor rights continue to cover covers, places, and chat wallpaper. The collaboration rows supersede the older chat entries in the table above.
 
 ## Storage (`trip-images`, private bucket)
 
 Object path convention: `<trip_id>/<item_id, "cover", "chat" or "chat-background">/<uuid>.<ext>`.
+
+Feed images also use `<trip_id>/posts/<uuid>.<ext>`. Members can insert images under `chat/` and `posts/`; the object owner can delete their own uploads there. Other paths retain editor-only insertion and deletion.
 
 | Operation | Policy |
 | --- | --- |
@@ -68,6 +86,10 @@ The bucket is **not public**; avatar URLs are signed and cached by React Query.
 | `join_trip_by_share(token)` | any signed-in caller, valid token | insert one membership with `share_role` |
 | `transfer_trip_ownership(trip_id, new_owner)` | caller is current owner; target is a member | swap roles atomically |
 | `reorder_trip_items(trip_id, item_ids[])` | `can_edit_trip` | rewrite sort order |
+| `edit_trip_message(message_id, content, mentioned_user_ids[])` | author, current member, within 15 minutes (RLS) | update text and mention recipients in one transaction |
+| `send_trip_message(trip_id, content, mentioned_user_ids[])` | current trip member (RLS) | insert message and mention recipients atomically |
+| `mark_trip_chat_read(trip_id, at)` | current trip member | advance own read position |
+| `set_trip_chat_notifications(trip_id, enabled)` | current trip member | mute or unmute own chat notifications |
 
 ## Edge Function
 

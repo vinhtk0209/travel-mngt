@@ -15,8 +15,12 @@ Built with **React 19 + TypeScript + Vite + Tailwind CSS + Supabase**.
 - **Drag-and-drop reordering** (list or card view) with optimistic updates.
 - **Trip tags** with accessible pastel colours, inline create/edit/delete, and dark-mode contrast.
 - **Realtime updates and trip chat** across members via Supabase Realtime.
+- **Trip chat collaboration** with member messaging, typing signals, read receipts, mentions, 15-minute edits, and per-trip notification settings.
+- **Private trip feed** with text, up to ten photos, linked places, reactions, comments, one-level replies, and owner pinning/moderation.
+- **In-app and optional browser notifications** for chat messages, mentions, comments, and reactions.
 - **Basic and Gemini assistant modes**, with Gemini backed by the `trip-assistant` Edge Function.
 - **Profile avatars** in private storage, shown across trips, members, and chat.
+- **Avatar actions** from the profile photo: view, crop/change, and remove.
 - **Private image storage** at `<trip_id>/<item_id|cover>/<uuid>.<ext>` with signed URLs and client-side compression.
 - Owner controls: member roles, remove members, transfer ownership, share links, delete trip.
 
@@ -51,7 +55,7 @@ Without these variables the app renders a setup screen instead of crashing.
 
 ```bash
 supabase start
-supabase db reset          # applies migrations + seed
+supabase migration up       # applies pending migrations without clearing local data
 ```
 
 After `supabase start`, run `supabase status` to get the local `API URL` and `anon key`, then put them in `.env.local`.
@@ -69,7 +73,7 @@ Recent Supabase CLI versions serve the Edge Functions with `supabase start`. If 
 supabase functions serve trip-assistant --env-file supabase/functions/.env
 ```
 
-The Gemini assistant mode needs `GEMINI_API_KEY`; Basic mode works without any key. Mailpit is still available at `http://127.0.0.1:55324` for local auth mail, but the app itself no longer sends trip invitation emails.
+The Gemini assistant mode needs `GEMINI_API_KEY`; Basic mode works without any key. Mailpit is available at `http://127.0.0.1:55324` for local mail. The `invite-member` function sends invite mail when `RESEND_API_KEY` and `INVITE_FROM_EMAIL` are configured; otherwise it returns a seven-day invite link.
 
 ### 4. End-to-end tests
 
@@ -83,6 +87,16 @@ npx playwright show-report        # inspect the last HTML report
 ```
 
 The suite starts Vite automatically, creates unique `e2e.*@example.com` users with injected sessions, and cleans them up after the run. Keep the Supabase stack running and restart it after changing `config.toml` or Edge Functions.
+
+The focused collaboration evidence suite is `npm run test:e2e -- e2e/backlog.spec.ts`. It saves screenshots under `evidence/backlog/`. The full suite is the release gate and includes the current social-only auth and trip tabs.
+
+## Feature workflow and repository knowledge
+
+Use [docs/FEATURE_WORKFLOW.md](docs/FEATURE_WORKFLOW.md) for the requirement-to-evidence pipeline and [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) for the versioned knowledge index intended for MCP retrieval. Architecture, RLS, and README changes belong in the same change as their feature.
+
+The November 2026 collaboration verification, including all 33 E2E cases and screenshots, is in [evidence/backlog/VERIFICATION.md](evidence/backlog/VERIFICATION.md).
+
+Run `npm run memory:mcp` from this repo to expose a read-only, cached MCP index of documentation, source, migrations, and tests. The server excludes `.env*`, screenshots, dependencies, and build output.
 
 ### 5. Production deployment
 
@@ -133,7 +147,7 @@ Deploy `dist/` to any static host (Vercel, Netlify, Cloudflare Pages). The route
 | Delete trip | ✅ | — | — |
 | Leave trip | — | ✅ | ✅ |
 
-SQL policies in `supabase/migrations/20260101000100_rls.sql` are the source of truth. UI gating is only UX. See `docs/RLS_MATRIX.md` for the full matrix.
+SQL policies in `supabase/migrations/` are the source of truth. UI gating is only UX. See `docs/RLS_MATRIX.md` for the full matrix.
 
 ## Project structure
 

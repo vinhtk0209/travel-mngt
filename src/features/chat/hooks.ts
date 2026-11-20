@@ -5,9 +5,14 @@ import { queryKeys } from '@/lib/query-keys'
 import type { Tables } from '@/lib/supabase/database.types'
 import {
   fetchTripMessageAttachments,
+  fetchTripChatReads,
   fetchTripMessageReactions,
+  fetchTripMessageMentions,
   fetchTripMessages,
   sendTripMessage,
+  editTripMessage,
+  markTripChatRead,
+  setTripChatNotifications,
   toggleTripMessageReaction,
   updateTripChatBackground,
 } from './api'
@@ -24,6 +29,59 @@ export function useTripMessages(tripId: string | undefined) {
     queryKey: queryKeys.tripMessages(tripId),
     queryFn: () => fetchTripMessages(tripId!),
     enabled: Boolean(tripId),
+    staleTime: 15_000,
+  })
+}
+
+export function useTripChatReads(tripId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.tripChatReads(tripId),
+    queryFn: () => fetchTripChatReads(tripId!),
+    enabled: Boolean(tripId),
+    staleTime: 10_000,
+  })
+}
+
+export function useMarkTripChatRead(tripId: string, userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (at: string) => {
+      if (!userId) throw new Error(translate('errors.authRequired'))
+      return markTripChatRead(tripId, at)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.tripChatReads(tripId) }),
+  })
+}
+
+export function useSetTripChatNotifications(tripId: string, userId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (enabled: boolean) => {
+      if (!userId) throw new Error(translate('errors.authRequired'))
+      return setTripChatNotifications(tripId, enabled)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.tripChatReads(tripId) }),
+  })
+}
+
+export function useEditTripMessage(tripId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ messageId, content, mentionIds }: { messageId: string; content: string; mentionIds: string[] }) =>
+      editTripMessage(messageId, content, mentionIds),
+    onSuccess: (message) => {
+      queryClient.setQueryData<TripMessage[]>(queryKeys.tripMessages(tripId),
+        (current) => mergeMessages(current ?? [], [message]))
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tripMessageMentions(tripId) })
+    },
+  })
+}
+
+export function useTripMessageMentions(tripId: string | undefined, messageIds: string[]) {
+  return useQuery({
+    queryKey: queryKeys.tripMessageMentions(tripId),
+    queryFn: () => fetchTripMessageMentions(messageIds),
+    enabled: Boolean(tripId) && messageIds.length > 0,
     staleTime: 15_000,
   })
 }
@@ -53,11 +111,12 @@ export function useSendTripMessage(tripId: string | undefined, senderId: string 
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { content: string; file?: File | null }) => {
+    mutationFn: (input: { content: string; file?: File | null; mentionIds?: string[] }) => {
       if (!tripId || !senderId) throw new Error(translate('errors.authRequired'))
-      return sendTripMessage({ tripId, senderId, content: input.content, file: input.file })
+      return sendTripMessage({ tripId, content: input.content, file: input.file, mentionIds: input.mentionIds })
     },
     onSuccess: ({ message, attachment }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tripMessageMentions(tripId) })
       queryClient.setQueryData<TripMessage[]>(queryKeys.tripMessages(tripId), (current) =>
         mergeMessages(current ?? [], [message]),
       )
@@ -139,18 +198,25 @@ export function useTripChatRealtime(tripId: string | undefined) {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'trip_messages',
           filter: `trip_id=eq.${tripId}`,
         },
         (payload) => {
+          if (payload.eventType === 'DELETE') {
+            void queryClient.invalidateQueries({ queryKey: queryKeys.tripMessages(tripId) })
+            return
+          }
           const message = payload.new as Tables<'trip_messages'>
           queryClient.setQueryData<TripMessage[]>(queryKeys.tripMessages(tripId), (current) =>
             mergeMessages(current ?? [], [message]),
           )
         },
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_chat_reads', filter: `trip_id=eq.${tripId}` }, () => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tripChatReads(tripId) })
+      })
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'trip_message_attachments' },
@@ -169,6 +235,9 @@ export function useTripChatRealtime(tripId: string | undefined) {
           })
         },
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_message_mentions' }, () => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.tripMessageMentions(tripId) })
+      })
       .subscribe()
 
     return () => {

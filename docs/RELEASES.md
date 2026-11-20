@@ -121,6 +121,8 @@ been applied to production.
 
 | Version | Contents | Backend notes |
 | --- | --- | --- |
+| `v0.5.0` | Chat collaboration, trip feed, avatar actions, notifications, progress and UI fixes | Requires additive migrations `20261120000000`–`20261120007000`; already applied to production. Rollback frontend to `v0.4.0` without reversing SQL. |
+| `v0.4.0` | i18n, avatars, chat, assistant modes, accessible tags, link sharing | Requires migrations through `20260101000800_profile_locale.sql` and the `trip-assistant` function. |
 | `v0.3.0` | Dark mode, maps links, link invites, Wanderbot, image upload fixes | Requires migration `20260101000300_share_links.sql` and the `invite-member` build from this tag |
 | `v0.2.0` | Social-only Google/GitHub auth | No link-invite schema |
 | `v0.1.1` | Vercel SPA rewrite | Same schema as `v0.1.0` |

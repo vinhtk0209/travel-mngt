@@ -1,7 +1,7 @@
 {
   "name": "travel-mngt",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,12 +11,15 @@
     "typecheck:e2e": "tsc --noEmit -p tsconfig.e2e.json",
     "test": "vitest",
     "test:run": "vitest run",
+    "memory:mcp": "node tools/repo-memory.mjs",
+    "memory:test": "node --test tools/repo-memory.check.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "release:verify": "npm run typecheck && npm run typecheck:e2e && npm run test:run && npm run build"
+    "release:verify": "npm run typecheck && npm run typecheck:e2e && npm run test:run && npm run memory:test && npm run build"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
     "@playwright/test": "^1.65.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",

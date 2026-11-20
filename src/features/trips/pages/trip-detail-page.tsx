@@ -1,6 +1,6 @@
-import { ArrowLeft, CalendarDays, MapPin, Settings2, Share2, Sparkles, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MapPin, MessageCircle, Newspaper, Settings2, Share2, Sparkles, Users } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AppShell } from '@/components/shared/app-shell'
 import { CoverImage } from '@/components/shared/cover-image'
 import { AvatarGroup } from '@/components/ui/avatar'
@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/auth-context'
 import { resolveAvatarUrl } from '@/features/avatars/api'
 import { useAvatarUrls } from '@/features/avatars/hooks'
 import { TripChatSection } from '@/features/chat/components/trip-chat-section'
+import { TripFeedSection } from '@/features/feed/components/trip-feed-section'
 import { useSignedImageUrls } from '@/features/images/hooks'
 import { ShareDialog } from '@/features/sharing/components/share-dialog'
 import { useTripMembers, useTripPermissions } from '@/features/trip-members/hooks'
@@ -24,12 +25,15 @@ import { formatDateRange, getTripTiming, getTripTimingLabel } from '@/utils/date
 export function TripDetailPage() {
   const { t } = useI18n()
   const { tripId } = useParams<{ tripId: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const tripQuery = useTrip(tripId)
   const membersQuery = useTripMembers(tripId)
   const permissions = useTripPermissions(tripId)
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const tabParam = searchParams.get('tab')
+  const activeTab = tabParam === 'chat' || tabParam === 'feed' ? tabParam : 'plans'
 
   const trip = tripQuery.data
   const members = membersQuery.data ?? []
@@ -160,16 +164,29 @@ export function TripDetailPage() {
             </div>
           </div>
 
-          <TripPlacesSection tripId={trip.id} canEdit={permissions.canEdit} />
-
-          <TripChatSection
+          <nav className="flex flex-wrap gap-2 border-b border-border pb-3" aria-label={t('detail.sections')}>
+            {([
+              { id: 'plans', label: t('detail.plansTab'), icon: MapPin },
+              { id: 'feed', label: t('detail.feedTab'), icon: Newspaper },
+              { id: 'chat', label: t('detail.chatTab'), icon: MessageCircle },
+            ] as const).map(({ id, label, icon: Icon }) => (
+              <button key={id} type="button" onClick={() => setSearchParams(id === 'plans' ? {} : { tab: id })} aria-current={activeTab === id ? 'page' : undefined}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${activeTab === id ? 'bg-coral-500 text-white' : 'bg-surface text-ink-soft hover:bg-cream'}`}>
+                <Icon className="h-4 w-4" />{label}
+              </button>
+            ))}
+          </nav>
+          {activeTab === 'plans' ? <TripPlacesSection tripId={trip.id} canEdit={permissions.canEdit} /> : null}
+          {activeTab === 'feed' ? <TripFeedSection tripId={trip.id} members={members} userId={user?.id} isOwner={permissions.isOwner} /> : null}
+          {activeTab === 'chat' ? <TripChatSection
             tripId={trip.id}
             members={members}
             currentUserId={user?.id}
-            canSend={permissions.canEdit}
+            canSend={permissions.isMember}
+            canCustomize={permissions.canEdit}
             chatBackground={trip.chat_background}
             chatBackgroundPath={trip.chat_background_path}
-          />
+          /> : null}
         </div>
       )}
 
