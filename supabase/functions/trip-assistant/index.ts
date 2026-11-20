@@ -35,7 +35,7 @@ const MAX_TURN_CHARS = 4_000
 const MAX_TOTAL_CHARS = 16_000
 const RATE_LIMIT_WINDOW_SECONDS = 60
 const RATE_LIMIT_REQUESTS = 20
-const GEMINI_TIMEOUT_MS = 20_000
+const GEMINI_TIMEOUT_MS = 45_000
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -130,7 +130,10 @@ async function callGemini(options: {
           })),
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 800,
+            maxOutputTokens: 2_048,
+            thinkingConfig: {
+              thinkingLevel: 'low',
+            },
           },
         }),
       },
@@ -155,7 +158,7 @@ async function callGemini(options: {
     }
 
     const payload = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[]
+      candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[]
       promptFeedback?: { blockReason?: string }
     }
 
@@ -166,7 +169,8 @@ async function callGemini(options: {
     }
 
     const text = payload.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? '')
+      ?.filter((part) => !part.thought)
+      .map((part) => part.text ?? '')
       .join('')
       .trim()
 

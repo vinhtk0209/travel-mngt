@@ -5,13 +5,37 @@ import { NotFoundPage } from './not-found-page'
 
 type PageModule = { default: ComponentType }
 
+const CHUNK_RELOAD_KEY = 'wanderlist.chunk-reload'
+
+function isStaleChunkError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|chunkloaderror/i.test(
+    message,
+  )
+}
+
+async function loadChunk(loader: () => Promise<PageModule>): Promise<PageModule> {
+  try {
+    const module = await loader()
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+    return module
+  } catch (error) {
+    if (isStaleChunkError(error) && !sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+      window.location.reload()
+      return new Promise<PageModule>(() => {})
+    }
+    throw error
+  }
+}
+
 const loadPage = (loader: () => Promise<PageModule>) => async () => {
-  const { default: Page } = await loader()
+  const { default: Page } = await loadChunk(loader)
   return { Component: Page }
 }
 
 const loadPublicPage = (loader: () => Promise<PageModule>) => async () => {
-  const { default: Page } = await loader()
+  const { default: Page } = await loadChunk(loader)
   return {
     Component: () => (
       <PublicOnlyRoute>
@@ -22,7 +46,7 @@ const loadPublicPage = (loader: () => Promise<PageModule>) => async () => {
 }
 
 const loadProtectedPage = (loader: () => Promise<PageModule>) => async () => {
-  const { default: Page } = await loader()
+  const { default: Page } = await loadChunk(loader)
   return {
     Component: () => (
       <ProtectedRoute>
